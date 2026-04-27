@@ -63,7 +63,7 @@ export default function SignUpForm() {
       // Persist to sessionStorage so the confirmation page can call /api/submit after Stripe redirects
       sessionStorage.setItem("notchup_slash_form", JSON.stringify(updatedForm));
 
-      const res = await fetch("/api/stripe/create-payment-intent", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/stripe/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,12 +73,17 @@ export default function SignUpForm() {
         }),
       });
       const data = await res.json();
-      if (data.clientSecret) setClientSecret(data.clientSecret);
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret);
+        next();
+      } else {
+        alert("Payment setup failed. Please try again.");
+      }
     } catch (e) {
       console.error(e);
+      alert("Payment setup failed. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
-      next();
     }
   };
 

@@ -20,7 +20,7 @@ function ConfirmationContent() {
     try {
       const formData = JSON.parse(raw);
       setSubmitted(true);
-      fetch("/api/submit", {
+      fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
