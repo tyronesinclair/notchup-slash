@@ -2,6 +2,7 @@ import Nav from "@/components/Nav";
 import Hero from "@/components/landing/Hero";
 import Providers from "@/components/landing/Providers";
 import HowItWorks from "@/components/landing/HowItWorks";
+import Testimonials from "@/components/landing/Testimonials";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
@@ -15,6 +16,7 @@ export default function Home() {
         <Hero />
         <Providers />
         <HowItWorks />
+        <Testimonials />
         <Pricing />
         <FAQ />
         <CTA />

@@ -72,14 +72,14 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
                     key={type}
                     type="button"
                     onClick={() => update(svc.id, { serviceType: type, provider: "" })}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-semibold transition-all"
+                    className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg border text-sm font-semibold transition-all whitespace-nowrap"
                     style={{
                       borderColor: svc.serviceType === type ? "#7F56D9" : "#EAECF0",
                       background: svc.serviceType === type ? "#F4EBFF" : "#fff",
                       color: svc.serviceType === type ? "#6941C6" : "#344054",
                     }}
                   >
-                    {type === "internet" ? <Wifi size={16} /> : <Smartphone size={16} />}
+                    {type === "internet" ? <Wifi size={16} className="shrink-0" /> : <Smartphone size={16} className="shrink-0" />}
                     {type === "internet" ? "Internet" : "Cell Phone"}
                   </button>
                 ))}
