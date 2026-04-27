@@ -20,7 +20,8 @@ function ConfirmationContent() {
     try {
       const formData = JSON.parse(raw);
       setSubmitted(true);
-      fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/submit`, {
+      const base = typeof window !== "undefined" ? (window as any).__NEXT_DATA__?.basePath ?? "" : "";
+      fetch(`${base}/api/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

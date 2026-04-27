@@ -63,7 +63,8 @@ export default function SignUpForm() {
       // Persist to sessionStorage so the confirmation page can call /api/submit after Stripe redirects
       sessionStorage.setItem("notchup_slash_form", JSON.stringify(updatedForm));
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/stripe/create-payment-intent`, {
+      const base = typeof window !== "undefined" ? (window as any).__NEXT_DATA__?.basePath ?? "" : "";
+      const res = await fetch(`${base}/api/stripe/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
