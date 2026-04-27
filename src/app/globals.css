@@ -627,6 +627,7 @@ img, svg { display: block; }
   .steps { grid-template-columns: repeat(2, 1fr); }
   .price-grid { grid-template-columns: 1fr; }
   .t-grid { grid-template-columns: 1fr 1fr; }
+  .t-card { grid-column: span 1; }
   .t-feature { grid-column: span 2; }
   .nav-links { display: none; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
