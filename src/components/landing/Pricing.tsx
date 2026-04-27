@@ -1,136 +1,76 @@
 import Link from "next/link";
-import { Check, ShieldCheck, X } from "lucide-react";
+
+function ExampleStep({ label, value, sub, highlight, muted }: { label: string; value: string; sub: string; highlight?: boolean; muted?: boolean }) {
+  return (
+    <div className={`ex-step ${highlight ? "ex-highlight" : ""} ${muted ? "ex-muted" : ""}`}>
+      <div className="ex-label">{label}</div>
+      <div className="ex-value">{value}</div>
+      <div className="ex-sub">{sub}</div>
+    </div>
+  );
+}
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-20" style={{ background: "#F9F5FF" }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <span className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-full mb-4"
-            style={{ background: "#F4EBFF", color: "#6941C6" }}>
-            Pricing & Guarantee
-          </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4"
-            style={{ fontFamily: "var(--font-montserrat)" }}>
-            Pay less than a coffee.<br />Save hundreds a year.
+    <section id="pricing" className="pricing">
+      <div className="container">
+        <div className="section-header">
+          <div className="kicker">Pricing</div>
+          <h2 className="section-h">
+            Pay less than a coffee. <span style={{ color: "var(--muted)" }}>Save hundreds a year.</span>
           </h2>
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Simple, transparent pricing. We only win when you win.
+          <p className="section-sub" style={{ maxWidth: 600 }}>
+            One transparent fee. We only win when you win — and if you don&apos;t, you don&apos;t owe a cent.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* $35 card */}
-          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-            <div className="text-3xl font-extrabold text-gray-900 mb-1"
-              style={{ fontFamily: "var(--font-montserrat)" }}>
-              $35
-            </div>
-            <div className="text-sm text-gray-500 mb-6">one-time activation fee</div>
-            <ul className="space-y-3 text-sm text-gray-600">
-              {[
-                "Covers AI agent setup",
-                "Covers bill analysis",
-                "Covers negotiation effort",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2">
-                  <Check size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  {t}
-                </li>
-              ))}
+        <div className="price-grid">
+          <div className="price-card">
+            <div className="price-label">Activation</div>
+            <div className="price-big">$35<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> one-time</span></div>
+            <ul className="price-list">
+              <li>AI agent setup for your account</li>
+              <li>Full bill audit + line-item analysis</li>
+              <li>Negotiation with retention dept.</li>
             </ul>
           </div>
 
-          {/* Main card */}
-          <div className="rounded-2xl p-8 text-white shadow-xl relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #4F4EA5 0%, #7F56D9 100%)" }}>
-            <div className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(255,255,255,0.2)" }}>
-              Most Popular
-            </div>
-            <div className="text-3xl font-extrabold mb-1"
-              style={{ fontFamily: "var(--font-montserrat)" }}>
-              40%
-            </div>
-            <div className="text-sm text-white/70 mb-6">of annual savings we secure</div>
-            <ul className="space-y-3 text-sm text-white/80">
-              {[
-                "Only charged after you approve",
-                "Based on first year's savings",
-                "You keep 60% forever",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2">
-                  <Check size={16} className="text-green-300 mt-0.5 shrink-0" />
-                  {t}
-                </li>
-              ))}
+          <div className="price-card price-card-feature">
+            <div className="price-tag">Most popular</div>
+            <div className="price-label" style={{ color: "var(--accent-ink)" }}>Success fee</div>
+            <div className="price-big">40%<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> of year-one savings</span></div>
+            <ul className="price-list">
+              <li>Charged <em>only</em> after you approve the offer</li>
+              <li>You keep the other 60% — and every cent after year one</li>
+              <li>Reject the offer? Get your $35 back</li>
             </ul>
+            <Link href="/sign-up" className="btn btn-primary btn-lg" style={{ justifyContent: "center", marginTop: 8 }}>
+              Get started — $35 <span aria-hidden>→</span>
+            </Link>
           </div>
 
-          {/* Guarantee card */}
-          <div className="bg-white rounded-2xl p-8 border-2 border-green-200 shadow-sm"
-            style={{ background: "#ECFDF3" }}>
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center mb-4">
-              <ShieldCheck size={20} className="text-green-600" />
-            </div>
-            <div className="text-lg font-extrabold text-gray-900 mb-2"
-              style={{ fontFamily: "var(--font-montserrat)" }}>
-              Risk-Free Guarantee
-            </div>
-            <ul className="space-y-3 text-sm text-gray-600">
-              {[
-                { icon: true, text: "Can't save $100+/year? It's completely free" },
-                { icon: true, text: "Don't like our offer? $35 fully refunded" },
-                { icon: true, text: "6-month window to find savings" },
-              ].map(({ text }) => (
-                <li key={text} className="flex items-start gap-2">
-                  <Check size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  {text}
-                </li>
-              ))}
+          <div className="price-card price-guarantee">
+            <div className="price-label">Guarantee</div>
+            <div className="price-big" style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400 }}>Risk-free</div>
+            <ul className="price-list">
+              <li>Can&apos;t save $100+/yr? Completely free.</li>
+              <li>Don&apos;t like our offer? $35 fully refunded.</li>
+              <li>6-month window to find your savings.</li>
             </ul>
           </div>
         </div>
 
-        {/* Example savings */}
-        <div className="mt-10 max-w-4xl mx-auto bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <p className="text-center text-sm font-bold text-gray-700 mb-4"
-            style={{ fontFamily: "var(--font-montserrat)" }}>
-            Example Savings Scenario
-          </p>
-          <div className="grid grid-cols-3 gap-4 text-center text-sm">
-            <div>
-              <div className="text-2xl font-extrabold text-gray-900"
-                style={{ fontFamily: "var(--font-montserrat)" }}>
-                $50/mo
-              </div>
-              <div className="text-gray-500 text-xs">Savings found on Rogers</div>
-            </div>
-            <div className="border-x border-gray-200">
-              <div className="text-2xl font-extrabold" style={{ color: "#B32E6E", fontFamily: "var(--font-montserrat)" }}>
-                $600/yr
-              </div>
-              <div className="text-gray-500 text-xs">Annual savings</div>
-            </div>
-            <div>
-              <div className="text-2xl font-extrabold text-green-600"
-                style={{ fontFamily: "var(--font-montserrat)" }}>
-                $325
-              </div>
-              <div className="text-gray-500 text-xs">You keep (after $35 + 40%)</div>
-            </div>
+        <div className="example">
+          <div className="kicker" style={{ marginBottom: 8 }}>Example math</div>
+          <div className="example-row">
+            <ExampleStep label="Found savings" value="$50/mo" sub="on Rogers Internet" />
+            <div className="ex-arrow" aria-hidden>→</div>
+            <ExampleStep label="Year-one savings" value="$600" sub="annual reduction" />
+            <div className="ex-arrow" aria-hidden>→</div>
+            <ExampleStep label="NotchUp takes" value="$240" sub="40% of year one" muted />
+            <div className="ex-arrow" aria-hidden>→</div>
+            <ExampleStep label="You keep" value="$325" sub="after $35 fee" highlight />
           </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base text-white shadow-lg hover:opacity-90 transition-all hover:-translate-y-0.5"
-            style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
-          >
-            Start for $35 →
-          </Link>
-          <p className="text-xs text-gray-400 mt-3">Money back if you reject our savings proposal</p>
         </div>
       </div>
     </section>

@@ -1,91 +1,58 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
 
 export default function Nav() {
-  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5 shrink-0" onClick={() => setOpen(false)}>
-          <span
-            className="text-xl font-extrabold tracking-tight"
-            style={{ fontFamily: "var(--font-montserrat)", color: "#4F4EA5" }}
-          >
+    <header style={{
+      position: "sticky", top: 0, zIndex: 50,
+      backdropFilter: "saturate(140%) blur(14px)",
+      background: scrolled ? "color-mix(in oklab, var(--bg) 78%, transparent)" : "transparent",
+      borderBottom: scrolled ? "1px solid var(--line)" : "1px solid transparent",
+      transition: "all .25s ease",
+    }}>
+      <div className="container nav-row">
+        <a href="https://notchup.app" style={{ display: "flex", alignItems: "center", gap: 12, color: "var(--ink)", textDecoration: "none" }}>
+          <span style={{
+            fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif",
+            fontWeight: 800, fontSize: 20, letterSpacing: "-0.03em",
+            color: "var(--accent-ink)",
+          }}>
             NotchUp
           </span>
-          <span
-            className="text-xl font-extrabold tracking-tight px-2 py-0.5 rounded"
-            style={{ background: "#4F4EA5", color: "#fff", fontFamily: "var(--font-montserrat)" }}
-          >
-            Slash
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            paddingLeft: 12, borderLeft: "1px solid var(--line-strong)",
+            fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif",
+            fontWeight: 500, fontSize: 15, letterSpacing: "-0.01em",
+            color: "var(--muted)",
+          }}>
+            <span style={{ color: "var(--accent-ink)", fontWeight: 700 }}>/</span>
+            <span>Slash</span>
           </span>
-        </Link>
+        </a>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-notch-purple transition-colors">
-            How it works
-          </a>
-          <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-notch-purple transition-colors">
-            Pricing
-          </a>
-          <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-notch-purple transition-colors">
-            FAQ
-          </a>
-          <Link
-            href="/sign-up"
-            className="text-sm font-bold px-5 py-2.5 rounded-lg text-white transition-all hover:opacity-90 hover:shadow-md"
-            style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
-          >
-            Slash My Bills →
-          </Link>
+        <nav className="nav-links nav-links-desktop">
+          <a href="#how">How it works</a>
+          <a href="#proof">Members</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <a href="https://notchup.app" className="nav-sign-in">Sign in</a>
+          <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Slash my bills <span aria-hidden>→</span></Link>
+          <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile" style={{ display: "none" }}>$35 →</Link>
         </div>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-          onClick={() => setOpen(!open)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
       </div>
-
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-1 shadow-lg">
-          {[
-            { href: "#how-it-works", label: "How it works" },
-            { href: "#pricing", label: "Pricing" },
-            { href: "#faq", label: "FAQ" },
-          ].map(({ href, label }) => (
-            <a
-              key={href}
-              href={href}
-              className="px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-              onClick={() => setOpen(false)}
-            >
-              {label}
-            </a>
-          ))}
-          <div className="pt-2 border-t border-gray-100 mt-1">
-            <Link
-              href="/sign-up"
-              className="block text-sm font-bold px-4 py-3.5 rounded-xl text-white text-center transition-all hover:opacity-90"
-              style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
-              onClick={() => setOpen(false)}
-            >
-              Slash My Bills for $35 →
-            </Link>
-          </div>
-        </div>
-      )}
-    </nav>
+    </header>
   );
 }

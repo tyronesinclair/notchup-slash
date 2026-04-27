@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { Calendar, Zap, Loader2, ShieldCheck } from "lucide-react";
@@ -23,6 +24,7 @@ function PaymentForm({
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentType, setPaymentType] = useState<"immediate" | "scheduled">(formData.paymentType);
@@ -44,11 +46,13 @@ function PaymentForm({
     setIsLoading(true);
     setError(null);
 
+    const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
+
     if (paymentType === "immediate") {
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/confirmation`,
+          return_url: `${window.location.origin}${base}/confirmation`,
           payment_method_data: {
             billing_details: { name: formData.name, email: formData.email, phone: formData.phone },
           },
@@ -60,7 +64,7 @@ function PaymentForm({
       const { error } = await stripe.confirmSetup({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/confirmation?scheduled=true&date=${scheduledDate}`,
+          return_url: `${window.location.origin}${base}/confirmation?scheduled=true&date=${scheduledDate}`,
         },
       });
       if (error) setError(error.message ?? "Setup failed. Please try again.");

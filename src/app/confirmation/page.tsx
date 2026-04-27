@@ -2,17 +2,20 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Clock, Mail, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, Mail, ArrowRight, XCircle } from "lucide-react";
 
 function ConfirmationContent() {
   const params = useSearchParams();
   const pathname = usePathname();
   const scheduled = params.get("scheduled") === "true";
   const scheduledDate = params.get("date");
+  const redirectStatus = params.get("redirect_status");
+  const failed = redirectStatus === "failed" || redirectStatus === "canceled";
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    // After Stripe redirects back, call submit API to save to DB
+    // Only submit to DB on successful payment
+    if (failed) return;
     const paymentIntent = params.get("payment_intent");
     const setupIntent = params.get("setup_intent");
     const raw = sessionStorage.getItem("notchup_slash_form");
@@ -34,7 +37,43 @@ function ConfirmationContent() {
     } catch (e) {
       console.error(e);
     }
-  }, [params, submitted]);
+  }, [params, submitted, failed]);
+
+  if (failed) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
+        style={{ background: "linear-gradient(135deg, #F9F5FF 0%, #EDE9FE 100%)" }}>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12 max-w-lg w-full text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "#FEF2F2" }}>
+            <XCircle size={36} className="text-red-500" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-3"
+            style={{ fontFamily: "var(--font-montserrat)" }}>
+            Payment not completed
+          </h1>
+          <p className="text-gray-500 mb-6 leading-relaxed">
+            Your payment was {redirectStatus === "canceled" ? "cancelled" : "declined"}. No charge was made to your card.
+          </p>
+          <Link
+            href="/sign-up"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ background: "#4F4EA5" }}
+          >
+            Try again <ArrowRight size={14} />
+          </Link>
+          <div className="mt-4">
+            <Link
+              href="https://notchup.app"
+              className="text-sm text-gray-400 hover:text-gray-600 underline"
+            >
+              Back to NotchUp
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
