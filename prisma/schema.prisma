@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  phone            String
+  stripeCustomerId String?
+  status           String    @default("pending")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  services         Service[]
+  payment          Payment?
+}
+
+model Service {
+  id                   String   @id @default(cuid())
+  customerId           String
+  customer             Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  serviceType          String   // "internet" | "cell_phone"
+  provider             String   // "rogers" | "bell" | "telus" | "videotron" | "freedom" | "shaw"
+  encryptedCredentials String   // AES-256-GCM encrypted JSON
+  status               String   @default("pending")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Payment {
+  id                    String    @id @default(cuid())
+  customerId            String    @unique
+  customer              Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount                Int       @default(3500)
+  currency              String    @default("cad")
+  paymentType           String    // "immediate" | "scheduled"
+  scheduledDate         DateTime?
+  stripePaymentIntentId String?
+  stripePaymentMethodId String?
+  status                String    @default("pending")
+  paidAt                DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}

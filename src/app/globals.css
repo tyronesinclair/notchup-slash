@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* NotchUp brand colors */
+  --color-notch-purple:   #4F4EA5;
+  --color-notch-600:      #7F56D9;
+  --color-notch-700:      #6941C6;
+  --color-notch-800:      #53389E;
+  --color-notch-50:       #F9F5FF;
+  --color-notch-100:      #F4EBFF;
+  --color-notch-200:      #E9D7FE;
+  --color-notch-pink:     #B32E6E;
+  --color-notch-pink-600: #FC0A7E;
+
+  /* Grays from NotchUp design system */
+  --color-gray-50:  #F9FAFB;
+  --color-gray-100: #F2F4F7;
+  --color-gray-200: #EAECF0;
+  --color-gray-300: #D0D5DD;
+  --color-gray-400: #98A2B3;
+  --color-gray-500: #667085;
+  --color-gray-600: #475467;
+  --color-gray-700: #344054;
+  --color-gray-800: #1D2939;
+  --color-gray-900: #101828;
+
+  --color-success-50:  #ECFDF3;
+  --color-success-700: #027A48;
+
+  /* Fonts */
+  --font-sans: var(--font-montserrat), 'Montserrat', Arial, sans-serif;
+  --font-body: var(--font-open-sans), 'Open Sans', Arial, sans-serif;
+}
+
+body {
+  background: #fff;
+  color: #101828;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
