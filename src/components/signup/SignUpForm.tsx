@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import StepIndicator from "./StepIndicator";
 import ServicesStep from "./ServicesStep";
 import CredentialsStep from "./CredentialsStep";
@@ -27,6 +28,7 @@ export type FormData = {
 const STEPS = ["Services", "Credentials", "Contact", "Payment"];
 
 export default function SignUpForm() {
+  const pathname = usePathname(); // route without basePath, e.g. "/sign-up"
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     services: [],
@@ -63,7 +65,7 @@ export default function SignUpForm() {
       // Persist to sessionStorage so the confirmation page can call /api/submit after Stripe redirects
       sessionStorage.setItem("notchup_slash_form", JSON.stringify(updatedForm));
 
-      const base = typeof window !== "undefined" ? (window as any).__NEXT_DATA__?.basePath ?? "" : "";
+      const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
       const res = await fetch(`${base}/api/stripe/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Clock, Mail, ArrowRight } from "lucide-react";
 
 function ConfirmationContent() {
   const params = useSearchParams();
+  const pathname = usePathname();
   const scheduled = params.get("scheduled") === "true";
   const scheduledDate = params.get("date");
   const [submitted, setSubmitted] = useState(false);
@@ -20,7 +21,7 @@ function ConfirmationContent() {
     try {
       const formData = JSON.parse(raw);
       setSubmitted(true);
-      const base = typeof window !== "undefined" ? (window as any).__NEXT_DATA__?.basePath ?? "" : "";
+      const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
       fetch(`${base}/api/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
