@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 async function getStats() {
   const [

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 type ContactData = { name: string; email: string; phone: string };
 type FieldError = { name?: string; email?: string; phone?: string };
@@ -26,6 +27,7 @@ function validate(data: ContactData): FieldError {
 }
 
 export default function ContactStep({ initial, onNext }: Props) {
+  const pathname = usePathname();
   const [data, setData] = useState<ContactData>(initial);
   const [errors, setErrors] = useState<FieldError>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -53,6 +55,12 @@ export default function ContactStep({ initial, onNext }: Props) {
       setTouched({ name: true, email: true, phone: true });
       return;
     }
+    const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
+    fetch(`${base}/api/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "contact_submit" }),
+    }).catch(() => {});
     onNext(data);
   };
 

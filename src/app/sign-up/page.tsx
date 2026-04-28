@@ -2,16 +2,20 @@ import { Metadata } from "next";
 import SignUpForm from "@/components/signup/SignUpForm";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import PageTracker from "@/components/PageTracker";
 import { ShieldCheck, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Get Started — NotchUp Slash",
-  description: "Start saving on your Rogers, Bell & Telus bills. Takes 5 minutes.",
+  title: "Get Started — Lower Your Rogers, Bell & Telus Bills",
+  description:
+    "Takes 5 minutes. Our AI negotiates with Rogers, Bell & Telus to cut your internet and phone bills. $35 activation — fully refunded if we can't save you $100+/year.",
+  robots: { index: true, follow: false },
 };
 
 export default function SignUpPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <PageTracker event="form_start" />
       <Nav />
       <main className="flex-1 flex items-start justify-center py-10 px-4">
         <div className="w-full max-w-2xl">

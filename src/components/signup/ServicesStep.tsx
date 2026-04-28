@@ -36,6 +36,7 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
   const canSubmit = services.every((s) => s.serviceType && s.provider) && !isLoading;
+  const hasIncomplete = services.some((s) => !s.provider);
 
   return (
     <div>
@@ -112,7 +113,13 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
         <Plus size={16} /> Add another service
       </button>
 
-      <div className="flex gap-3 mt-6">
+      {hasIncomplete && (
+        <p className="mt-3 text-xs text-amber-600">
+          Please select a provider for each service to continue.
+        </p>
+      )}
+
+      <div className="flex gap-3 mt-3">
         <button
           type="button"
           onClick={onBack}

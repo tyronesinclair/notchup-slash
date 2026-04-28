@@ -119,7 +119,7 @@ function PaymentForm({
         >
           <Calendar size={18} />
           <span>Pay on Payday</span>
-          <span className="text-xs font-normal opacity-70">Schedule a date</span>
+          <span className="text-xs font-normal opacity-70">Pick any date ≤ 60 days</span>
         </button>
       </div>
 
@@ -139,7 +139,7 @@ function PaymentForm({
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400"
           />
           <p className="text-xs text-gray-400 mt-1.5">
-            We'll charge your card on this date. Your account activates immediately — we start working right away.
+            We save your card today and charge on this date. Your spot in queue is secured immediately.
           </p>
         </div>
       )}
@@ -214,6 +214,7 @@ export default function PaymentStep({ formData, clientSecret, onPaymentTypeChang
 
   return (
     <Elements
+      key={clientSecret}
       stripe={stripePromise}
       options={{
         clientSecret,
