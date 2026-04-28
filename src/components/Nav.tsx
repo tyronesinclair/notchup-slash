@@ -58,7 +58,7 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
           </a>
 
           <nav className="nav-links nav-links-desktop">
-            {NAV_LINKS.map(l => <a key={l.href} href={l.href}>{l.label}</a>)}
+            {NAV_LINKS.map(l => <Link key={l.href} href={l.href}>{l.label}</Link>)}
           </nav>
 
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -82,9 +82,9 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
         <div className="nav-drawer" onClick={close}>
           <nav className="nav-drawer-inner" onClick={e => e.stopPropagation()}>
             {NAV_LINKS.map(l => (
-              <a key={l.href} href={l.href} className="nav-drawer-link" onClick={close}>
+              <Link key={l.href} href={l.href} className="nav-drawer-link" onClick={close}>
                 {l.label}
-              </a>
+              </Link>
             ))}
             <div className="nav-drawer-footer">
               <a href="https://notchup.app" className="nav-drawer-signin" onClick={close}>Sign in</a>
