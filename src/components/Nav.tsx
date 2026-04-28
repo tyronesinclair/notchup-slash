@@ -49,7 +49,7 @@ export default function Nav() {
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <a href="https://notchup.app" className="nav-sign-in">Sign in</a>
           <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Slash my bills <span aria-hidden>→</span></Link>
-          <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile" style={{ display: "none" }}>$35 →</Link>
+          <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$35 →</Link>
         </div>
       </div>
     </header>

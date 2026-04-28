@@ -266,12 +266,12 @@ function ConfirmationContent() {
         </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
-            {scheduled ? "You&apos;re on the list!" : "Payment received!"}
+            {scheduled ? "You're on the list!" : "Payment received!"}
           </h1>
           <p className="text-gray-500 leading-relaxed">
             {scheduled
-              ? `Your $35 activation fee is scheduled for ${formattedDate ?? "your chosen date"}. We&apos;ll start working on your file right away.`
-              : "Your $35 activation fee is confirmed. You&apos;re in our negotiation queue."}
+              ? `Your $35 activation fee is scheduled for ${formattedDate ?? "your chosen date"}. We'll start working on your file right away.`
+              : "Your $35 activation fee is confirmed. You're in our negotiation queue."}
           </p>
         </div>
 

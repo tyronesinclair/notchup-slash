@@ -28,8 +28,7 @@ export default function Footer() {
           <a href="https://www.notchup.app/about-us">About Us</a>
           <a href="https://www.notchup.app/relief-plan">Relief Plan</a>
           <a href="https://www.notchup.app/notchup-plus">NotchUp Plus</a>
-          <a href="#">Slash</a>
-          <a href="#">Influencers &amp; Affiliates</a>
+          <a href="https://notchup.app/slash">Slash</a>
         </div>
 
         <div>
@@ -53,7 +52,7 @@ export default function Footer() {
           <strong>About NotchUp Slash</strong> — Slash is an AI-powered bill negotiation service available exclusively to NotchUp members in Canada. We charge a one-time $35 activation fee plus 40% of the savings we secure in the first 12 months. If we can&apos;t find at least $100 in annual savings within six months, the service is completely free and your $35 is refunded.
         </p>
         <p>
-          <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Videotron, Freedom Mobile, Shaw Communications, Fido Solutions, Koodo Mobile, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
+          <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Videotron, Freedom Mobile, Fido Solutions, Koodo Mobile, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
         </p>
         <p>
           <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr average, 32% reduction, individual testimonial amounts) reflect outcomes of approved offers across NotchUp Slash members and are not a guarantee of future results. Actual savings depend on your current plan, carrier, and account history.

@@ -82,9 +82,10 @@ img, svg { display: block; }
 .nav-sign-in { font-size: 14px; color: var(--muted); padding: 9px 14px; transition: color .15s; }
 .nav-sign-in:hover { color: var(--ink); }
 @media (max-width: 960px) { .nav-links-desktop { display: none; } }
+.nav-cta-mobile { display: none; }
 @media (max-width: 720px) {
-  .nav-cta-desktop { display: none !important; }
-  .nav-cta-mobile { display: inline-flex !important; }
+  .nav-cta-desktop { display: none; }
+  .nav-cta-mobile { display: inline-flex; }
   .nav-sign-in { display: none; }
 }
 
