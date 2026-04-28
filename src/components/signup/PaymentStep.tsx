@@ -47,29 +47,34 @@ function PaymentForm({
     setError(null);
 
     const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
+    const billingDetails = { name: formData.name, email: formData.email, phone: formData.phone };
 
-    if (paymentType === "immediate") {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}${base}/confirmation`,
-          payment_method_data: {
-            billing_details: { name: formData.name, email: formData.email, phone: formData.phone },
+    try {
+      if (paymentType === "immediate") {
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}${base}/confirmation`,
+            payment_method_data: { billing_details: billingDetails },
           },
-        },
-      });
-      if (error) setError(error.message ?? "Payment failed. Please try again.");
-    } else {
-      // For scheduled: save the payment method setup
-      const { error } = await stripe.confirmSetup({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}${base}/confirmation?scheduled=true&date=${scheduledDate}`,
-        },
-      });
-      if (error) setError(error.message ?? "Setup failed. Please try again.");
+        });
+        if (error) setError(error.message ?? "Payment failed. Please try again.");
+      } else {
+        const { error } = await stripe.confirmSetup({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}${base}/confirmation?scheduled=true&date=${scheduledDate}`,
+            payment_method_data: { billing_details: billingDetails },
+          },
+        });
+        if (error) setError(error.message ?? "Setup failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Payment submission error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   // Min date: tomorrow

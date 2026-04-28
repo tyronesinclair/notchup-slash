@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       const setupIntent = await stripe.setupIntents.create({
         customer: customer.id,
         usage: "off_session",
-        payment_method_types: ["card"],
+        automatic_payment_methods: { enabled: true, allow_redirects: "never" },
         metadata: { email, paymentType: "scheduled" },
       });
 
