@@ -4,9 +4,12 @@ export default function Footer() {
       <div className="container footer-grid">
         <div className="footer-brand">
           <a href="https://notchup.app" style={{ display: "inline-block" }}>
-            <span style={{ fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em", color: "var(--accent-ink)" }}>
-              NotchUp
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/66427492c358294cac47f56b_NU%201B.png"
+              alt="NotchUp"
+              style={{ height: 24, width: "auto", display: "block" }}
+            />
           </a>
           <p style={{ color: "var(--ink-soft)", fontSize: 14, marginTop: 14, maxWidth: 320, lineHeight: 1.5 }}>
             Make any day payday.

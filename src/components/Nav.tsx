@@ -21,13 +21,12 @@ export default function Nav() {
     }}>
       <div className="container nav-row">
         <a href="https://notchup.app" style={{ display: "flex", alignItems: "center", gap: 12, color: "var(--ink)", textDecoration: "none" }}>
-          <span style={{
-            fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif",
-            fontWeight: 800, fontSize: 20, letterSpacing: "-0.03em",
-            color: "var(--accent-ink)",
-          }}>
-            NotchUp
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/66427492c358294cac47f56b_NU%201B.png"
+            alt="NotchUp"
+            style={{ height: 22, width: "auto", display: "block" }}
+          />
           <span style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             paddingLeft: 12, borderLeft: "1px solid var(--line-strong)",
