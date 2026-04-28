@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
@@ -15,15 +16,36 @@ export async function GET(req: NextRequest) {
     orderBy: { scheduledDate: "asc" },
   });
 
-  const results = payments.map((p) => ({
-    name: p.customer.name,
-    email: p.customer.email,
-    scheduledDate: p.scheduledDate,
-    hasPaymentMethod: !!p.stripePaymentMethodId,
-    stripePaymentMethodId: p.stripePaymentMethodId,
-    stripeCustomerId: p.customer.stripeCustomerId,
-    willCharge: !!p.stripePaymentMethodId,
-  }));
+  const results = await Promise.all(
+    payments.map(async (p) => {
+      const hasIdInDb = !!p.stripePaymentMethodId;
+
+      let stripeVerified = false;
+      let stripeError: string | null = null;
+
+      if (hasIdInDb) {
+        try {
+          const pm = await stripe.paymentMethods.retrieve(p.stripePaymentMethodId!);
+          // Valid if it exists and is attached to a customer
+          stripeVerified = !!pm && pm.customer !== null;
+        } catch (e: unknown) {
+          stripeError = e instanceof Error ? e.message : "Unknown error";
+        }
+      }
+
+      return {
+        name: p.customer.name,
+        email: p.customer.email,
+        scheduledDate: p.scheduledDate,
+        stripeCustomerId: p.customer.stripeCustomerId,
+        stripePaymentMethodId: p.stripePaymentMethodId,
+        hasIdInDb,
+        stripeVerified,
+        stripeError,
+        willCharge: stripeVerified,
+      };
+    })
+  );
 
   const ready = results.filter((r) => r.willCharge).length;
   const missing = results.filter((r) => !r.willCharge).length;

@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
 import Link from "next/link";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
+
+type ScheduledPaymentWithVerification = Awaited<ReturnType<typeof prisma.payment.findMany<{ include: { customer: true } }>>>[number] & {
+  stripeVerified: boolean;
+  stripeError: string | null;
+};
 
 async function getStats() {
   const [
     totalCustomers,
     paidPayments,
-    scheduledPayments,
-    scheduledWithCard,
+    rawScheduled,
     recentCustomers,
     eventCounts,
     revenueResult,
@@ -23,9 +28,6 @@ async function getStats() {
       where: { status: "scheduled" },
       include: { customer: true },
       orderBy: { scheduledDate: "asc" },
-    }),
-    prisma.payment.count({
-      where: { status: "scheduled", stripePaymentMethodId: { not: null } },
     }),
     prisma.customer.findMany({
       take: 20,
@@ -43,6 +45,21 @@ async function getStats() {
     prisma.customer.count({ where: { status: "credentials_received" } }),
   ]);
 
+  // Verify each scheduled payment method against Stripe — don't trust DB alone
+  const scheduledPayments: ScheduledPaymentWithVerification[] = await Promise.all(
+    rawScheduled.map(async (p) => {
+      if (!p.stripePaymentMethodId) {
+        return { ...p, stripeVerified: false, stripeError: "No payment method ID in DB" };
+      }
+      try {
+        const pm = await stripe.paymentMethods.retrieve(p.stripePaymentMethodId);
+        return { ...p, stripeVerified: !!pm && pm.customer !== null, stripeError: null };
+      } catch (e: unknown) {
+        return { ...p, stripeVerified: false, stripeError: e instanceof Error ? e.message : "Stripe error" };
+      }
+    })
+  );
+
   const eventMap = Object.fromEntries(
     eventCounts.map((e) => [e.event, e._count.event])
   );
@@ -51,7 +68,6 @@ async function getStats() {
     totalCustomers,
     paidPayments,
     scheduledPayments,
-    scheduledWithCard,
     recentCustomers,
     eventMap,
     totalRevenueCents: revenueResult._sum.amount ?? 0,
@@ -96,7 +112,6 @@ export default async function AdminPage() {
     totalCustomers,
     paidPayments,
     scheduledPayments,
-    scheduledWithCard,
     recentCustomers,
     eventMap,
     totalRevenueCents,
@@ -109,9 +124,10 @@ export default async function AdminPage() {
   const credentialsSubmits = eventMap["credentials_submit"] ?? 0;
 
   const scheduledTotal = scheduledPayments.length;
-  const scheduledMissingCard = scheduledTotal - scheduledWithCard;
-  const projectedRevenue = ((paidPayments + scheduledWithCard) * 35).toFixed(2);
+  const verifiedCount = scheduledPayments.filter((p) => p.stripeVerified).length;
+  const missingCardCount = scheduledTotal - verifiedCount;
   const collectedRevenue = (totalRevenueCents / 100).toFixed(2);
+  const scheduledRevenue = (scheduledTotal * 35).toFixed(2);
   const conversionRate = pageViews > 0 ? (((paidPayments + scheduledTotal) / pageViews) * 100).toFixed(1) : "—";
 
   return (
@@ -143,16 +159,17 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Collected</div>
-            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${collectedRevenue}</div>
-            <div className="text-xs text-gray-400 mt-1">{paidPayments} paid · ${projectedRevenue} w/ scheduled</div>
+            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${collectedRevenue} CAD</div>
+            <div className="text-xs text-gray-400 mt-1">{paidPayments} paid · cash in hand</div>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Scheduled</div>
-            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>{scheduledTotal}</div>
+            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${scheduledRevenue} CAD</div>
             <div className="text-xs mt-1">
-              <span className="text-green-600 font-semibold">{scheduledWithCard} card saved</span>
-              {scheduledMissingCard > 0 && (
-                <span className="text-red-500 font-semibold"> · {scheduledMissingCard} no card</span>
+              {scheduledTotal} customers ·{" "}
+              <span className="text-green-600 font-semibold">{verifiedCount} card confirmed</span>
+              {missingCardCount > 0 && (
+                <span className="text-red-500 font-semibold"> · {missingCardCount} at risk</span>
               )}
             </div>
           </div>
@@ -168,7 +185,7 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        {/* Scheduled payments — card status */}
+        {/* Scheduled payments — Stripe-verified card status */}
         {scheduledTotal > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -177,12 +194,12 @@ export default async function AdminPage() {
                   Scheduled charges
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Cards are charged automatically at 8am PST on the customer&apos;s chosen date.
+                  Card status verified live against Stripe. Charged automatically at 8am PST on the customer&apos;s chosen date.
                 </p>
               </div>
-              {scheduledMissingCard > 0 && (
+              {missingCardCount > 0 && (
                 <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
-                  ⚠ {scheduledMissingCard} missing card
+                  ⚠ {missingCardCount} will not charge
                 </span>
               )}
             </div>
@@ -192,13 +209,12 @@ export default async function AdminPage() {
                   <tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
                     <th className="text-left px-6 py-3">Customer</th>
                     <th className="text-left px-6 py-3">Charge date</th>
-                    <th className="text-left px-6 py-3">Card on file</th>
+                    <th className="text-left px-6 py-3">Card (Stripe verified)</th>
                     <th className="text-left px-6 py-3">Will charge</th>
                   </tr>
                 </thead>
                 <tbody>
                   {scheduledPayments.map((p) => {
-                    const hasCard = !!p.stripePaymentMethodId;
                     const chargeDate = p.scheduledDate
                       ? new Date(p.scheduledDate).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
                       : "—";
@@ -218,14 +234,19 @@ export default async function AdminPage() {
                           {isPast && <div className="text-xs text-red-500">Overdue</div>}
                         </td>
                         <td className="px-6 py-3">
-                          {hasCard ? (
-                            <span className="text-green-600 font-semibold text-xs">✓ Saved</span>
+                          {p.stripeVerified ? (
+                            <span className="text-green-600 font-semibold text-xs">✓ Confirmed in Stripe</span>
                           ) : (
-                            <span className="text-red-500 font-semibold text-xs">✗ Missing</span>
+                            <div>
+                              <span className="text-red-500 font-semibold text-xs">✗ Not found in Stripe</span>
+                              {p.stripeError && (
+                                <div className="text-xs text-red-400 mt-0.5">{p.stripeError}</div>
+                              )}
+                            </div>
                           )}
                         </td>
                         <td className="px-6 py-3">
-                          <Badge label={hasCard ? "Yes" : "No — needs card"} color={hasCard ? "green" : "red"} />
+                          <Badge label={p.stripeVerified ? "Yes" : "No — card issue"} color={p.stripeVerified ? "green" : "red"} />
                         </td>
                       </tr>
                     );
@@ -295,8 +316,9 @@ export default async function AdminPage() {
               </thead>
               <tbody>
                 {recentCustomers.map((c) => {
-                  const hasCard = !!c.payment?.stripePaymentMethodId;
                   const isScheduled = c.payment?.status === "scheduled";
+                  const scheduledEntry = scheduledPayments.find((p) => p.customerId === c.id);
+                  const hasCard = isScheduled ? (scheduledEntry?.stripeVerified ?? false) : false;
                   const chargeDate = c.payment?.scheduledDate
                     ? new Date(c.payment.scheduledDate).toLocaleDateString("en-CA", { month: "short", day: "numeric" })
                     : null;
