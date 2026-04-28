@@ -16,7 +16,7 @@ export default function SignUpPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <PageTracker event="form_start" />
-      <Nav />
+      <Nav hideSignUpCta />
       <main className="flex-1 flex items-start justify-center py-10 px-4">
         <div className="w-full max-w-2xl">
 

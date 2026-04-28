@@ -4,13 +4,13 @@ import Link from "next/link";
 import { X, Menu } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "#how", label: "How it works" },
-  { href: "#proof", label: "Members" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#how", label: "How it works" },
+  { href: "/#proof", label: "Members" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
-export default function Nav() {
+export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -63,8 +63,8 @@ export default function Nav() {
 
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <a href="https://notchup.app" className="nav-sign-in">Sign in</a>
-            <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Slash my bills <span aria-hidden>→</span></Link>
-            <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$35 →</Link>
+            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Slash my bills <span aria-hidden>→</span></Link>}
+            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$35 →</Link>}
             <button
               className="nav-hamburger"
               onClick={() => setOpen(o => !o)}
@@ -88,9 +88,11 @@ export default function Nav() {
             ))}
             <div className="nav-drawer-footer">
               <a href="https://notchup.app" className="nav-drawer-signin" onClick={close}>Sign in</a>
-              <Link href="/sign-up" className="btn btn-primary" style={{ justifyContent: "center" }} onClick={close}>
-                Slash my bills — $35 →
-              </Link>
+              {!hideSignUpCta && (
+                <Link href="/sign-up" className="btn btn-primary" style={{ justifyContent: "center" }} onClick={close}>
+                  Slash my bills — $35 →
+                </Link>
+              )}
             </div>
           </nav>
         </div>
