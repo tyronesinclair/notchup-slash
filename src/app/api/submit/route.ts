@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
 import { sendConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
@@ -11,10 +12,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // For scheduled payments: retrieve the SetupIntent now to grab the saved payment method.
+    // The Stripe webhook fires before this page loads, so the webhook can't find the customer yet.
+    // Pulling it here guarantees stripePaymentMethodId is always saved.
+    let stripePaymentMethodId: string | null = null;
+    let stripeCustomerId: string | null = null;
+    if (paymentType === "scheduled" && stripePaymentIntentId) {
+      try {
+        const si = await stripe.setupIntents.retrieve(stripePaymentIntentId);
+        stripePaymentMethodId = (si.payment_method as string) ?? null;
+        stripeCustomerId = (si.customer as string) ?? null;
+      } catch (e) {
+        console.error("Could not retrieve setup intent:", e);
+      }
+    }
+
     const customer = await prisma.customer.upsert({
       where: { email },
-      update: { name, phone },
-      create: { name, email, phone },
+      update: { name, phone, ...(stripeCustomerId && { stripeCustomerId }) },
+      create: { name, email, phone, stripeCustomerId: stripeCustomerId ?? undefined },
     });
 
     // Create service records — credentials are collected post-payment via /api/credentials
@@ -40,6 +56,7 @@ export async function POST(req: NextRequest) {
         paymentType,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         stripePaymentIntentId: stripePaymentIntentId ?? null,
+        stripePaymentMethodId: stripePaymentMethodId,
         status: paymentType === "scheduled" ? "scheduled" : "paid",
         paidAt: paymentType === "immediate" ? new Date() : null,
       },
@@ -48,6 +65,7 @@ export async function POST(req: NextRequest) {
         paymentType,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         stripePaymentIntentId: stripePaymentIntentId ?? null,
+        stripePaymentMethodId: stripePaymentMethodId,
         status: paymentType === "scheduled" ? "scheduled" : "paid",
         paidAt: paymentType === "immediate" ? new Date() : null,
       },

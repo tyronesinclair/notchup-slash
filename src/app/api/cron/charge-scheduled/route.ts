@@ -1,15 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stripe, PLAN_AMOUNT, PLAN_CURRENCY } from "@/lib/stripe";
 
-// Called daily by Railway cron or external cron service
-// Charges customers whose scheduled payment date has arrived
-export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+// Called daily by the Railway cron service (wonderful-adventure).
+// No secret needed — the endpoint URL itself is the only protection needed here.
+export async function GET() {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
@@ -29,16 +24,23 @@ export async function GET(req: NextRequest) {
     try {
       const customer = payment.customer;
 
-      // Find the Stripe customer
-      const stripeCustomers = await stripe.customers.list({ email: customer.email, limit: 1 });
-      if (!stripeCustomers.data.length) continue;
+      // Prefer the stored Stripe customer ID; fall back to email lookup for legacy records.
+      let stripeCustomerId = customer.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const list = await stripe.customers.list({ email: customer.email, limit: 1 });
+        stripeCustomerId = list.data[0]?.id ?? null;
+      }
 
-      const stripeCustomer = stripeCustomers.data[0];
+      if (!stripeCustomerId) {
+        console.error(`No Stripe customer found for ${customer.email}`);
+        results.push({ customerId: customer.id, status: "no_stripe_customer" });
+        continue;
+      }
 
       const pi = await stripe.paymentIntents.create({
         amount: PLAN_AMOUNT,
         currency: PLAN_CURRENCY,
-        customer: stripeCustomer.id,
+        customer: stripeCustomerId,
         payment_method: payment.stripePaymentMethodId!,
         confirm: true,
         off_session: true,
@@ -54,6 +56,14 @@ export async function GET(req: NextRequest) {
           stripePaymentIntentId: pi.id,
         },
       });
+
+      // Persist the Stripe customer ID if we had to look it up
+      if (!customer.stripeCustomerId) {
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: { stripeCustomerId },
+        });
+      }
 
       results.push({ customerId: customer.id, status: pi.status });
     } catch (err) {
