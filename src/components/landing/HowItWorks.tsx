@@ -1,8 +1,8 @@
 const steps = [
-  { n: "01", time: "5 minutes",  title: "Tell us your providers",  body: "Pick your carriers, share your account credentials through bank-grade encryption, and pay the $35 activation fee.", icon: "📋" },
-  { n: "02", time: "3–5 weeks",  title: "Our AI gets to work",      body: "NotchUp agents analyze your bills line-by-line, hunt overpayments, and negotiate directly with retention departments.", icon: "🤖" },
-  { n: "03", time: "Your call",  title: "You review the offer",     body: "We email a savings proposal. Reject for any reason and your $35 is refunded — no questions, no follow-ups.", icon: "✓" },
-  { n: "04", time: "Forever",    title: "Keep the savings",         body: "Approve the new rate. We take 40% of the first year's savings. You keep 60% — and the lower bill — for years.", icon: "↗" },
+  { n: "01", time: "5 minutes",  title: "Tell us your providers",  body: "Pick your carriers and pay the $35 activation fee. Then share your account credentials through AES-256 encryption — we handle it from there.", icon: "📋" },
+  { n: "02", time: "3–5 weeks",  title: "Our AI gets to work",      body: "NotchUp agents analyze your bills line-by-line, spot every overpayment, and negotiate directly with retention departments on your behalf.", icon: "🤖" },
+  { n: "03", time: "Your call",  title: "You review the offer",     body: "We email you a savings proposal. Don't like it? Reject for any reason and your $35 is refunded — no questions asked.", icon: "✓" },
+  { n: "04", time: "Forever",    title: "Keep the savings",         body: "Approve the new rate. We take 40% of what we save you in year one. You keep 60% — and the lower bill — every month after.", icon: "↗" },
 ];
 
 export default function HowItWorks() {

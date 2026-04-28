@@ -92,11 +92,11 @@ function PaymentForm({
       </p>
 
       {/* Payment type toggle */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6">
         <button
           type="button"
           onClick={() => handlePaymentTypeChange("immediate")}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl border text-sm font-semibold transition-all"
+          className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border text-sm font-semibold transition-all"
           style={{
             borderColor: paymentType === "immediate" ? "#7F56D9" : "#EAECF0",
             background: paymentType === "immediate" ? "#F4EBFF" : "#fff",
@@ -110,7 +110,7 @@ function PaymentForm({
         <button
           type="button"
           onClick={() => handlePaymentTypeChange("scheduled")}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl border text-sm font-semibold transition-all"
+          className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border text-sm font-semibold transition-all"
           style={{
             borderColor: paymentType === "scheduled" ? "#7F56D9" : "#EAECF0",
             background: paymentType === "scheduled" ? "#F4EBFF" : "#fff",

@@ -22,19 +22,18 @@ export default function SignUpPage() {
 
           {/* Header */}
           <div className="text-center mb-6">
-            {/* Urgency badge */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mb-4 text-amber-800 bg-amber-50 border border-amber-200">
               <Clock size={12} />
-              Currently 3–5 week queue · Join now to secure your spot
+              3–5 week queue · Secure your spot now
             </div>
             <h1
               className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2"
               style={{ fontFamily: "var(--font-montserrat)" }}
             >
-              Slash your Rogers, Bell & Telus bills
+              Get started in 5 minutes
             </h1>
             <p className="text-gray-500 text-sm max-w-md mx-auto">
-              Takes about 5 minutes. Our AI handles everything from there.
+              Tell us your provider, add your card. We handle the rest — or you pay nothing.
             </p>
           </div>
 
