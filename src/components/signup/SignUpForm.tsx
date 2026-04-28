@@ -3,7 +3,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import StepIndicator from "./StepIndicator";
 import ServicesStep from "./ServicesStep";
-import CredentialsStep from "./CredentialsStep";
 import ContactStep from "./ContactStep";
 import PaymentStep from "./PaymentStep";
 
@@ -11,9 +10,6 @@ export type ServiceEntry = {
   id: string;
   serviceType: "internet" | "cell_phone";
   provider: string;
-  username: string;
-  password: string;
-  accountNumber: string;
 };
 
 export type FormData = {
@@ -25,10 +21,10 @@ export type FormData = {
   scheduledDate: string;
 };
 
-const STEPS = ["Services", "Credentials", "Contact", "Payment"];
+const STEPS = ["Your Info", "Services", "Activate"];
 
 export default function SignUpForm() {
-  const pathname = usePathname(); // route without basePath, e.g. "/sign-up"
+  const pathname = usePathname();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     services: [],
@@ -47,32 +43,27 @@ export default function SignUpForm() {
   const updateFormData = (patch: Partial<FormData>) =>
     setFormData((prev) => ({ ...prev, ...patch }));
 
-  const handleServicesSubmit = (services: ServiceEntry[]) => {
-    updateFormData({ services });
+  const handleContactNext = (contact: { name: string; email: string; phone: string }) => {
+    updateFormData(contact);
     next();
   };
 
-  const handleCredentialsSubmit = (services: ServiceEntry[]) => {
-    updateFormData({ services });
-    next();
-  };
-
-  const handleContactSubmit = async (contact: { name: string; email: string; phone: string }) => {
-    const updatedForm = { ...formData, ...contact };
-    setFormData(updatedForm);
+  const handleServicesSubmit = async (services: ServiceEntry[]) => {
+    const updated = { ...formData, services };
+    setFormData(updated);
     setIsSubmitting(true);
+
     try {
-      // Persist to sessionStorage so the confirmation page can call /api/submit after Stripe redirects
-      sessionStorage.setItem("notchup_slash_form", JSON.stringify(updatedForm));
+      sessionStorage.setItem("notchup_slash_form", JSON.stringify(updated));
 
       const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
       const res = await fetch(`${base}/api/stripe/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: contact.email,
-          paymentType: updatedForm.paymentType,
-          scheduledDate: updatedForm.scheduledDate,
+          email: updated.email,
+          paymentType: updated.paymentType,
+          scheduledDate: updated.scheduledDate,
         }),
       });
       const data = await res.json();
@@ -82,9 +73,8 @@ export default function SignUpForm() {
       } else {
         alert("Payment setup failed. Please try again.");
       }
-    } catch (e) {
-      console.error(e);
-      alert("Payment setup failed. Please check your connection and try again.");
+    } catch {
+      alert("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -95,27 +85,20 @@ export default function SignUpForm() {
       <StepIndicator steps={STEPS} current={step} />
       <div className="p-6 md:p-8">
         {step === 0 && (
-          <ServicesStep
-            initialServices={formData.services}
-            onSubmit={handleServicesSubmit}
+          <ContactStep
+            initial={{ name: formData.name, email: formData.email, phone: formData.phone }}
+            onNext={handleContactNext}
           />
         )}
         {step === 1 && (
-          <CredentialsStep
-            services={formData.services}
-            onSubmit={handleCredentialsSubmit}
-            onBack={back}
-          />
-        )}
-        {step === 2 && (
-          <ContactStep
-            initial={{ name: formData.name, email: formData.email, phone: formData.phone }}
-            onSubmit={handleContactSubmit}
+          <ServicesStep
+            initialServices={formData.services}
+            onSubmit={handleServicesSubmit}
             onBack={back}
             isLoading={isSubmitting}
           />
         )}
-        {step === 3 && (
+        {step === 2 && (
           <PaymentStep
             formData={formData}
             clientSecret={clientSecret}

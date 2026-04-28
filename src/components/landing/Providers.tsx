@@ -4,12 +4,11 @@ const carrierStyles: Record<string, { color: string; weight: number; italic: boo
   Telus:     { color: "#4B286D", weight: 700, italic: false, ls: "-0.02em" },
   Freedom:   { color: "#00A551", weight: 700, italic: false, ls: "-0.025em" },
   Videotron: { color: "#FFC72C", weight: 800, italic: false, ls: "-0.03em", bg: "#FFC72C", textColor: "#1A1A1A" },
-  Shaw:      { color: "#0072CE", weight: 700, italic: false, ls: "-0.025em" },
   Fido:      { color: "#E6007E", weight: 800, italic: false, ls: "-0.04em" },
   Koodo:     { color: "#5C2D91", weight: 800, italic: false, ls: "-0.03em" },
 };
 
-const carriers = ["Rogers", "Bell", "Telus", "Freedom", "Videotron", "Shaw", "Fido", "Koodo"];
+const carriers = ["Rogers", "Bell", "Telus", "Freedom", "Videotron", "Fido", "Koodo"];
 
 function CarrierLogo({ name }: { name: string }) {
   const s = carrierStyles[name] || { color: "var(--ink)", weight: 700, italic: false, ls: "-0.02em" };

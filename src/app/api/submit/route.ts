@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { encrypt } from "@/lib/encryption";
 import { sendConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
@@ -12,32 +11,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Upsert customer
     const customer = await prisma.customer.upsert({
       where: { email },
       update: { name, phone },
       create: { name, email, phone },
     });
 
-    // Encrypt and save each service
+    // Create service records — credentials are collected post-payment via /api/credentials
     for (const svc of services) {
-      const credentials = JSON.stringify({
-        username: svc.username,
-        password: svc.password,
-        accountNumber: svc.accountNumber ?? "",
+      const existing = await prisma.service.findFirst({
+        where: { customerId: customer.id, provider: svc.provider, serviceType: svc.serviceType },
       });
-
-      await prisma.service.create({
-        data: {
-          customerId: customer.id,
-          serviceType: svc.serviceType,
-          provider: svc.provider,
-          encryptedCredentials: encrypt(credentials),
-        },
-      });
+      if (!existing) {
+        await prisma.service.create({
+          data: {
+            customerId: customer.id,
+            serviceType: svc.serviceType,
+            provider: svc.provider,
+            encryptedCredentials: "",
+          },
+        });
+      }
     }
 
-    // Record payment
     await prisma.payment.upsert({
       where: { customerId: customer.id },
       update: {
@@ -57,7 +53,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Send confirmation email
     await sendConfirmationEmail({ name, email, services, paymentType, scheduledDate });
 
     return NextResponse.json({ success: true, customerId: customer.id });

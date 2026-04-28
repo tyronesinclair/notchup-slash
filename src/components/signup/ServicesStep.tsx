@@ -1,41 +1,41 @@
 "use client";
 import { useState } from "react";
-import { Plus, Trash2, Wifi, Smartphone } from "lucide-react";
+import { Plus, Trash2, Wifi, Smartphone, Loader2 } from "lucide-react";
 import { ServiceEntry } from "./SignUpForm";
 import { nanoid } from "nanoid";
 
 const PROVIDERS: Record<"internet" | "cell_phone", string[]> = {
-  internet: ["Rogers", "Bell", "Telus", "Shaw", "Videotron", "Freedom Mobile", "Other"],
+  internet: ["Rogers", "Bell", "Telus", "Videotron", "Freedom Mobile", "Other"],
   cell_phone: ["Rogers", "Bell", "Telus", "Freedom Mobile", "Videotron", "Koodo", "Fido", "Virgin Plus", "Other"],
 };
 
 type Props = {
   initialServices: ServiceEntry[];
   onSubmit: (services: ServiceEntry[]) => void;
+  onBack: () => void;
+  isLoading?: boolean;
 };
 
-export default function ServicesStep({ initialServices, onSubmit }: Props) {
+export default function ServicesStep({ initialServices, onSubmit, onBack, isLoading }: Props) {
   const [services, setServices] = useState<ServiceEntry[]>(
     initialServices.length > 0
       ? initialServices
-      : [{ id: nanoid(), serviceType: "internet", provider: "", username: "", password: "", accountNumber: "" }]
+      : [{ id: nanoid(), serviceType: "internet", provider: "" }]
   );
 
   const addService = () =>
     setServices((prev) => [
       ...prev,
-      { id: nanoid(), serviceType: "cell_phone", provider: "", username: "", password: "", accountNumber: "" },
+      { id: nanoid(), serviceType: "cell_phone", provider: "" },
     ]);
 
   const remove = (id: string) =>
     setServices((prev) => prev.filter((s) => s.id !== id));
 
   const update = (id: string, patch: Partial<ServiceEntry>) =>
-    setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...patch } : s))
-    );
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
-  const canSubmit = services.every((s) => s.serviceType && s.provider);
+  const canSubmit = services.every((s) => s.serviceType && s.provider) && !isLoading;
 
   return (
     <div>
@@ -43,17 +43,18 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
         Which services do you want to slash?
       </h2>
       <p className="text-sm text-gray-500 mb-6">
-        Add each internet or cell phone plan you want us to negotiate. One $35 fee covers all of them.
+        Add each internet or cell phone plan. One $35 fee covers all of them.
       </p>
 
       <div className="space-y-4">
         {services.map((svc, idx) => (
           <div key={svc.id} className="rounded-xl border border-gray-200 p-5 relative">
-            {/* Remove button */}
             {services.length > 1 && (
               <button
                 onClick={() => remove(svc.id)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
+                type="button"
+                aria-label="Remove service"
               >
                 <Trash2 size={16} />
               </button>
@@ -63,7 +64,6 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
               Service {idx + 1}
             </div>
 
-            {/* Service type */}
             <div className="mb-4">
               <label className="block text-xs font-semibold text-gray-700 mb-2">Service type</label>
               <div className="grid grid-cols-2 gap-3">
@@ -72,7 +72,7 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
                     key={type}
                     type="button"
                     onClick={() => update(svc.id, { serviceType: type, provider: "" })}
-                    className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg border text-sm font-semibold transition-all whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg border text-sm font-semibold transition-all"
                     style={{
                       borderColor: svc.serviceType === type ? "#7F56D9" : "#EAECF0",
                       background: svc.serviceType === type ? "#F4EBFF" : "#fff",
@@ -86,14 +86,12 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
               </div>
             </div>
 
-            {/* Provider */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-2">Provider</label>
               <select
                 value={svc.provider}
                 onChange={(e) => update(svc.id, { provider: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-notch-600"
-                style={{ fontFamily: "var(--font-body)" }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400"
               >
                 <option value="">Select your provider…</option>
                 {PROVIDERS[svc.serviceType].map((p) => (
@@ -114,14 +112,31 @@ export default function ServicesStep({ initialServices, onSubmit }: Props) {
         <Plus size={16} /> Add another service
       </button>
 
-      <button
-        disabled={!canSubmit}
-        onClick={() => onSubmit(services)}
-        className="mt-6 w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
-      >
-        Continue →
-      </button>
+      <div className="flex gap-3 mt-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          ← Back
+        </button>
+        <button
+          type="button"
+          disabled={!canSubmit}
+          onClick={() => onSubmit(services)}
+          className="flex-[2] py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Preparing…
+            </>
+          ) : (
+            "Continue to Payment →"
+          )}
+        </button>
+      </div>
     </div>
   );
 }

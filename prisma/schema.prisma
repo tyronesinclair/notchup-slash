@@ -26,10 +26,21 @@ model Service {
   customer             Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   serviceType          String   // "internet" | "cell_phone"
   provider             String   // "rogers" | "bell" | "telus" | "videotron" | "freedom" | "shaw"
-  encryptedCredentials String   // AES-256-GCM encrypted JSON
+  encryptedCredentials String   @default("") // AES-256-GCM encrypted JSON, populated post-payment
   status               String   @default("pending")
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  event     String   // page_view | form_start | contact_submit | payment_success | payment_fail | credentials_submit
+  sessionId String?
+  meta      String?  // JSON
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([createdAt])
 }
 
 model Payment {
