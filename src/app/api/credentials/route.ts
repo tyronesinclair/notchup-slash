@@ -11,13 +11,18 @@ export async function POST(req: NextRequest) {
     }
 
     for (const svc of services) {
-      const { serviceId, username, password, accountNumber } = svc;
+      const { provider, serviceType, username, password, accountNumber } = svc;
       if (!username || !password) continue;
 
       const encrypted = encrypt(JSON.stringify({ username, password, accountNumber: accountNumber ?? "" }));
 
+      const record = await prisma.service.findFirst({
+        where: { customerId, provider, serviceType },
+      });
+      if (!record) continue;
+
       await prisma.service.update({
-        where: { id: serviceId },
+        where: { id: record.id },
         data: { encryptedCredentials: encrypted, status: "credentials_received" },
       });
     }

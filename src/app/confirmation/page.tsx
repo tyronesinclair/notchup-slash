@@ -92,16 +92,18 @@ function ConfirmationContent() {
     setSavingCreds(true);
     try {
       const payload = creds.map((c) => ({
-        serviceId: c.serviceId,
+        provider: c.provider,
+        serviceType: c.serviceType,
         username: c.username,
         password: c.password,
         accountNumber: c.accountNumber,
       }));
-      await fetch(`${base}/api/credentials`, {
+      const res = await fetch(`${base}/api/credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customerId, services: payload }),
       });
+      if (!res.ok) throw new Error("credentials save failed");
       fetch(`${base}/api/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
