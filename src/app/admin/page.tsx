@@ -177,9 +177,17 @@ export default async function AdminPage() {
               </thead>
               <tbody>
                 {recentCustomers.map((c) => (
-                  <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-3 font-medium text-gray-900">{c.name}</td>
-                    <td className="px-6 py-3 text-gray-500">{c.email}</td>
+                  <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <td className="px-6 py-3 font-medium text-gray-900">
+                      <Link href={`/admin/customers/${c.id}`} className="hover:text-violet-600 transition-colors">
+                        {c.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-3 text-gray-500">
+                      <Link href={`/admin/customers/${c.id}`} className="hover:text-violet-600 transition-colors">
+                        {c.email}
+                      </Link>
+                    </td>
                     <td className="px-6 py-3 text-gray-500">
                       {c.services.map((s) => `${s.provider} (${s.serviceType === "internet" ? "net" : "cell"})`).join(", ")}
                     </td>

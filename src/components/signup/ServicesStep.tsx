@@ -35,7 +35,9 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
   const update = (id: string, patch: Partial<ServiceEntry>) =>
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
-  const canSubmit = services.every((s) => s.serviceType && s.provider) && !isLoading;
+  const canSubmit = services.every(
+    (s) => s.serviceType && s.provider && (s.provider !== "Other" || !!s.providerOther?.trim())
+  ) && !isLoading;
   const hasIncomplete = services.some((s) => !s.provider);
 
   return (
@@ -91,7 +93,7 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
               <label className="block text-xs font-semibold text-gray-700 mb-2">Provider</label>
               <select
                 value={svc.provider}
-                onChange={(e) => update(svc.id, { provider: e.target.value })}
+                onChange={(e) => update(svc.id, { provider: e.target.value, providerOther: "" })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400"
               >
                 <option value="">Select your provider…</option>
@@ -99,6 +101,15 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
+              {svc.provider === "Other" && (
+                <input
+                  type="text"
+                  value={svc.providerOther ?? ""}
+                  onChange={(e) => update(svc.id, { providerOther: e.target.value })}
+                  placeholder="Enter your provider name"
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                />
+              )}
             </div>
           </div>
         ))}
@@ -130,7 +141,11 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
         <button
           type="button"
           disabled={!canSubmit}
-          onClick={() => onSubmit(services)}
+          onClick={() => onSubmit(services.map((s) =>
+            s.provider === "Other" && s.providerOther?.trim()
+              ? { ...s, provider: s.providerOther.trim() }
+              : s
+          ))}
           className="flex-[2] py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
         >

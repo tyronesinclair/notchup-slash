@@ -10,6 +10,7 @@ export type ServiceEntry = {
   id: string;
   serviceType: "internet" | "cell_phone";
   provider: string;
+  providerOther?: string;
 };
 
 export type FormData = {
