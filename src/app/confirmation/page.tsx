@@ -278,7 +278,7 @@ function ConfirmationContent() {
         <div className="bg-gray-50 rounded-xl p-5 mb-6 space-y-3">
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400">What happens next</p>
           {[
-            { icon: "✉️", text: "Confirmation email on its way" },
+            { icon: "✉️", text: "Confirmation email within 24 hours" },
             { icon: "🤖", text: "AI agents begin working in 3–5 weeks" },
             { icon: "✅", text: "We email you a savings proposal to approve or reject" },
           ].map(({ icon, text }) => (
