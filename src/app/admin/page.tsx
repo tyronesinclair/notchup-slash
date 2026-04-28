@@ -157,14 +157,21 @@ export default async function AdminPage() {
 
         {/* Key metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 col-span-2 md:col-span-1" style={{ borderColor: "#4F4EA5", borderWidth: 2 }}>
+            <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#4F4EA5" }}>Total Revenue</div>
+            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>
+              ${(parseFloat(collectedRevenue) + parseFloat(scheduledRevenue)).toFixed(2)} CAD
+            </div>
+            <div className="text-xs text-gray-400 mt-1">${collectedRevenue} collected · ${scheduledRevenue} scheduled</div>
+          </div>
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Collected</div>
-            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${collectedRevenue} CAD</div>
+            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${collectedRevenue}</div>
             <div className="text-xs text-gray-400 mt-1">{paidPayments} paid · cash in hand</div>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Scheduled</div>
-            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${scheduledRevenue} CAD</div>
+            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${scheduledRevenue}</div>
             <div className="text-xs mt-1">
               {scheduledTotal} customers ·{" "}
               <span className="text-green-600 font-semibold">{verifiedCount} card confirmed</span>
@@ -177,11 +184,6 @@ export default async function AdminPage() {
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Total signups</div>
             <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>{totalCustomers}</div>
             <div className="text-xs text-gray-400 mt-1">{conversionRate}% conversion</div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Credentials</div>
-            <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>{credentialsCount}</div>
-            <div className="text-xs text-gray-400 mt-1">of {totalCustomers} signups</div>
           </div>
         </div>
 
