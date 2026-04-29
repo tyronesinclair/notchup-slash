@@ -34,6 +34,7 @@ export default function SignUpForm() {
     scheduledDate: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   // track what intent type the current clientSecret was created for
   const [intentType, setIntentType] = useState<"immediate" | "scheduled">("immediate");
@@ -66,6 +67,7 @@ export default function SignUpForm() {
     setIsSubmitting(true);
 
     try {
+      setSubmitError(null);
       sessionStorage.setItem("notchup_slash_form", JSON.stringify(updated));
 
       const data = await fetchIntent(updated.email, updated.paymentType, updated.scheduledDate);
@@ -74,10 +76,10 @@ export default function SignUpForm() {
         setIntentType(updated.paymentType);
         next();
       } else {
-        alert("Payment setup failed. Please try again.");
+        setSubmitError("Payment setup failed. Please try again.");
       }
     } catch {
-      alert("Network error. Please check your connection and try again.");
+      setSubmitError("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,6 +136,7 @@ export default function SignUpForm() {
             onSubmit={handleServicesSubmit}
             onBack={back}
             isLoading={isSubmitting}
+            error={submitError}
           />
         )}
         {step === 2 && (

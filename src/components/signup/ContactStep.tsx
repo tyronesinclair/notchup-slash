@@ -61,10 +61,10 @@ export default function ContactStep({ initial, onNext }: Props) {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <h2 className="text-lg font-extrabold text-gray-900 mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>
-        Let&apos;s get started
+        Where should we send your savings?
       </h2>
       <p className="text-sm text-gray-500 mb-6">
-        We&apos;ll email you when we have a savings proposal ready.
+        We negotiate, you approve or reject. No calls, no hold music.
       </p>
 
       <div className="space-y-4">
@@ -77,6 +77,7 @@ export default function ContactStep({ initial, onNext }: Props) {
             onBlur={() => blur("name")}
             placeholder="Jane Smith"
             autoComplete="name"
+            autoFocus
             className={fieldClass("name")}
           />
           {errors.name && touched.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
@@ -102,7 +103,7 @@ export default function ContactStep({ initial, onNext }: Props) {
         className="mt-6 w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
         style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
       >
-        Continue →
+        Start Saving →
       </button>
     </form>
   );

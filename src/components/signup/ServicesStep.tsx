@@ -14,14 +14,16 @@ type Props = {
   onSubmit: (services: ServiceEntry[]) => void;
   onBack: () => void;
   isLoading?: boolean;
+  error?: string | null;
 };
 
-export default function ServicesStep({ initialServices, onSubmit, onBack, isLoading }: Props) {
+export default function ServicesStep({ initialServices, onSubmit, onBack, isLoading, error }: Props) {
   const [services, setServices] = useState<ServiceEntry[]>(
     initialServices.length > 0
       ? initialServices
       : [{ id: nanoid(), serviceType: "internet", provider: "" }]
   );
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const addService = () =>
     setServices((prev) => [
@@ -38,7 +40,7 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
   const canSubmit = services.every(
     (s) => s.serviceType && s.provider && (s.provider !== "Other" || !!s.providerOther?.trim())
   ) && !isLoading;
-  const hasIncomplete = services.some((s) => !s.provider);
+  const hasIncomplete = submitAttempted && services.some((s) => !s.provider);
 
   return (
     <div>
@@ -123,11 +125,21 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
       >
         <Plus size={16} /> Add another service
       </button>
+      {services.length === 1 && (
+        <p className="mt-2 text-xs text-gray-400">
+          Have both internet and cell? Add both — one $35 fee covers everything.
+        </p>
+      )}
 
       {hasIncomplete && (
         <p className="mt-3 text-xs text-amber-600">
           Please select a provider for each service to continue.
         </p>
+      )}
+      {error && (
+        <div className="mt-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+          {error}
+        </div>
       )}
 
       <div className="flex gap-3 mt-3">
@@ -141,11 +153,15 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
         <button
           type="button"
           disabled={!canSubmit}
-          onClick={() => onSubmit(services.map((s) =>
-            s.provider === "Other" && s.providerOther?.trim()
-              ? { ...s, provider: s.providerOther.trim() }
-              : s
-          ))}
+          onClick={() => {
+            setSubmitAttempted(true);
+            if (!canSubmit) return;
+            onSubmit(services.map((s) =>
+              s.provider === "Other" && s.providerOther?.trim()
+                ? { ...s, provider: s.providerOther.trim() }
+                : s
+            ));
+          }}
           className="flex-[2] py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
         >

@@ -120,7 +120,7 @@ function PaymentForm({
         Activation fee — $35 CAD
       </h2>
       <p className="text-sm text-gray-500 mb-5">
-        One-time fee to start your negotiation.
+        One time. Never charged again. Fully refunded if we can&apos;t save you $100+.
       </p>
 
       {/* Savings estimate */}
