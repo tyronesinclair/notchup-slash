@@ -364,7 +364,7 @@ export default async function AdminPage() {
                       <td className="px-6 py-3">
                         <Badge
                           label={c.payment?.status ?? "none"}
-                          color={c.payment?.status === "paid" ? "green" : c.payment?.status === "scheduled" ? "amber" : "gray"}
+                          color={c.payment?.status === "paid" ? "green" : c.payment?.status === "scheduled" ? "amber" : c.payment?.status === "failed" ? "red" : "gray"}
                         />
                       </td>
                       <td className="px-6 py-3 text-xs text-gray-500">

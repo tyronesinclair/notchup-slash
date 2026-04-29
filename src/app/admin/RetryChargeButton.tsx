@@ -23,7 +23,8 @@ export default function RetryChargeButton({ paymentId }: { paymentId: string }) 
         setMessage(data.error ?? "Failed");
       } else if (data.status === "succeeded") {
         setResult("success");
-        setMessage("Charged!");
+        setMessage("Charged! Reloading…");
+        setTimeout(() => window.location.reload(), 1200);
       } else {
         setResult("error");
         setMessage(data.status ?? "Unknown");
