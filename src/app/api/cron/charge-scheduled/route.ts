@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stripe, PLAN_AMOUNT, PLAN_CURRENCY } from "@/lib/stripe";
 
-// Called daily by the Railway cron service (wonderful-adventure).
-// No secret needed — the endpoint URL itself is the only protection needed here.
-export async function GET() {
+// Called daily by the Railway cron service.
+// Requires CRON_SECRET header to prevent unauthorized triggering.
+export async function GET(req: Request) {
+  const secret = req.headers.get("x-cron-secret");
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
