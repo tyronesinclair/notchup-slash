@@ -16,39 +16,47 @@ export async function GET(req: NextRequest) {
     orderBy: { scheduledDate: "asc" },
   });
 
-  const results = await Promise.all(
-    payments.map(async (p) => {
-      const hasIdInDb = !!p.stripePaymentMethodId;
+  // Sequential — not parallel — to avoid Stripe rate limits
+  const results = [];
+  for (const p of payments) {
+    const hasIdInDb = !!p.stripePaymentMethodId;
 
-      let stripeVerified = false;
-      let stripeError: string | null = null;
+    let stripeVerified = false;
+    let stripeStatus: "confirmed" | "not_found" | "rate_limited" | "no_id" | "error" = "no_id";
+    let stripeError: string | null = null;
 
-      if (hasIdInDb) {
-        try {
-          const pm = await stripe.paymentMethods.retrieve(p.stripePaymentMethodId!);
-          // Valid if it exists and is attached to a customer
-          stripeVerified = !!pm && pm.customer !== null;
-        } catch (e: unknown) {
-          stripeError = e instanceof Error ? e.message : "Unknown error";
-        }
+    if (hasIdInDb) {
+      try {
+        const pm = await stripe.paymentMethods.retrieve(p.stripePaymentMethodId!);
+        stripeVerified = !!pm && pm.customer !== null;
+        stripeStatus = stripeVerified ? "confirmed" : "not_found";
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        const isRateLimit = msg.toLowerCase().includes("rate limit");
+        stripeStatus = isRateLimit ? "rate_limited" : "error";
+        stripeError = msg;
+        // Rate limited ≠ card missing — don't treat as failure
+        stripeVerified = false;
       }
+    }
 
-      return {
-        name: p.customer.name,
-        email: p.customer.email,
-        scheduledDate: p.scheduledDate,
-        stripeCustomerId: p.customer.stripeCustomerId,
-        stripePaymentMethodId: p.stripePaymentMethodId,
-        hasIdInDb,
-        stripeVerified,
-        stripeError,
-        willCharge: stripeVerified,
-      };
-    })
-  );
+    results.push({
+      name: p.customer.name,
+      email: p.customer.email,
+      scheduledDate: p.scheduledDate,
+      stripeCustomerId: p.customer.stripeCustomerId,
+      stripePaymentMethodId: p.stripePaymentMethodId,
+      hasIdInDb,
+      stripeVerified,
+      stripeStatus,
+      stripeError,
+      willCharge: stripeVerified,
+    });
+  }
 
-  const ready = results.filter((r) => r.willCharge).length;
-  const missing = results.filter((r) => !r.willCharge).length;
+  const ready = results.filter((r) => r.stripeVerified).length;
+  const missing = results.filter((r) => !r.stripeVerified && r.stripeStatus !== "rate_limited").length;
+  const rateLimited = results.filter((r) => r.stripeStatus === "rate_limited").length;
 
-  return NextResponse.json({ total: results.length, ready, missing, payments: results });
+  return NextResponse.json({ total: results.length, ready, missing, rateLimited, payments: results });
 }

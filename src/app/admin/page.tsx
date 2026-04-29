@@ -2,21 +2,25 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { stripe } from "@/lib/stripe";
 import Link from "next/link";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-type ScheduledPaymentWithVerification = Awaited<ReturnType<typeof prisma.payment.findMany<{ include: { customer: true } }>>>[number] & {
-  stripeVerified: boolean;
-  stripeError: string | null;
-};
+// Returns today's date string (YYYY-MM-DD) in Pacific time
+function todayPST() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+}
+
+// Returns the date string (YYYY-MM-DD) for a given UTC Date in Pacific time
+function datePST(d: Date) {
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+}
 
 async function getStats() {
   const [
     totalCustomers,
     paidPayments,
-    rawScheduled,
+    scheduledPayments,
     recentCustomers,
     eventCounts,
     revenueResult,
@@ -44,21 +48,6 @@ async function getStats() {
     }),
     prisma.customer.count({ where: { status: "credentials_received" } }),
   ]);
-
-  // Verify each scheduled payment method against Stripe — don't trust DB alone
-  const scheduledPayments: ScheduledPaymentWithVerification[] = await Promise.all(
-    rawScheduled.map(async (p) => {
-      if (!p.stripePaymentMethodId) {
-        return { ...p, stripeVerified: false, stripeError: "No payment method ID in DB" };
-      }
-      try {
-        const pm = await stripe.paymentMethods.retrieve(p.stripePaymentMethodId);
-        return { ...p, stripeVerified: !!pm && pm.customer !== null, stripeError: null };
-      } catch (e: unknown) {
-        return { ...p, stripeVerified: false, stripeError: e instanceof Error ? e.message : "Stripe error" };
-      }
-    })
-  );
 
   const eventMap = Object.fromEntries(
     eventCounts.map((e) => [e.event, e._count.event])
@@ -124,11 +113,12 @@ export default async function AdminPage() {
   const credentialsSubmits = eventMap["credentials_submit"] ?? 0;
 
   const scheduledTotal = scheduledPayments.length;
-  const verifiedCount = scheduledPayments.filter((p) => p.stripeVerified).length;
-  const missingCardCount = scheduledTotal - verifiedCount;
+  const cardInDbCount = scheduledPayments.filter((p) => !!p.stripePaymentMethodId).length;
+  const missingCardCount = scheduledTotal - cardInDbCount;
   const collectedRevenue = (totalRevenueCents / 100).toFixed(2);
   const scheduledRevenue = (scheduledTotal * 35).toFixed(2);
   const conversionRate = pageViews > 0 ? (((paidPayments + scheduledTotal) / pageViews) * 100).toFixed(1) : "—";
+  const today = todayPST();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,9 +164,9 @@ export default async function AdminPage() {
             <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>${scheduledRevenue}</div>
             <div className="text-xs mt-1">
               {scheduledTotal} customers ·{" "}
-              <span className="text-green-600 font-semibold">{verifiedCount} card confirmed</span>
+              <span className="text-green-600 font-semibold">{cardInDbCount} card saved</span>
               {missingCardCount > 0 && (
-                <span className="text-red-500 font-semibold"> · {missingCardCount} at risk</span>
+                <span className="text-red-500 font-semibold"> · {missingCardCount} no card</span>
               )}
             </div>
           </div>
@@ -196,31 +186,39 @@ export default async function AdminPage() {
                   Scheduled charges
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Card status verified live against Stripe. Charged automatically at 8am PST on the customer&apos;s chosen date.
+                  Card status based on DB record. Use &ldquo;Verify with Stripe&rdquo; for live confirmation. Charged at 8am PST on chosen date.
                 </p>
               </div>
-              {missingCardCount > 0 && (
-                <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
-                  ⚠ {missingCardCount} will not charge
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {missingCardCount > 0 && (
+                  <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
+                    ⚠ {missingCardCount} no card saved
+                  </span>
+                )}
+                <Link href="/api/admin/scheduled-check" target="_blank" className="text-xs text-violet-600 hover:underline font-semibold">
+                  Verify with Stripe →
+                </Link>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
                     <th className="text-left px-6 py-3">Customer</th>
-                    <th className="text-left px-6 py-3">Charge date</th>
-                    <th className="text-left px-6 py-3">Card (Stripe verified)</th>
-                    <th className="text-left px-6 py-3">Will charge</th>
+                    <th className="text-left px-6 py-3">Charge date (PST)</th>
+                    <th className="text-left px-6 py-3">Card saved</th>
+                    <th className="text-left px-6 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {scheduledPayments.map((p) => {
-                    const chargeDate = p.scheduledDate
-                      ? new Date(p.scheduledDate).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
+                    const hasCard = !!p.stripePaymentMethodId;
+                    const chargeDatePST = p.scheduledDate ? datePST(new Date(p.scheduledDate)) : null;
+                    const chargeLabel = chargeDatePST
+                      ? new Date(chargeDatePST + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
                       : "—";
-                    const isPast = p.scheduledDate ? new Date(p.scheduledDate) < new Date() : false;
+                    // Overdue only if the date has passed in PST (strictly before today)
+                    const isOverdue = chargeDatePST ? chargeDatePST < today : false;
                     return (
                       <tr key={p.id} className="border-b border-gray-50">
                         <td className="px-6 py-3">
@@ -230,25 +228,20 @@ export default async function AdminPage() {
                           <div className="text-xs text-gray-400">{p.customer.email}</div>
                         </td>
                         <td className="px-6 py-3">
-                          <span className={`font-medium ${isPast ? "text-red-600" : "text-gray-900"}`}>
-                            {chargeDate}
+                          <span className={`font-medium ${isOverdue ? "text-red-600" : "text-gray-900"}`}>
+                            {chargeLabel}
                           </span>
-                          {isPast && <div className="text-xs text-red-500">Overdue</div>}
+                          {isOverdue && <div className="text-xs text-red-500">Overdue — check cron</div>}
                         </td>
                         <td className="px-6 py-3">
-                          {p.stripeVerified ? (
-                            <span className="text-green-600 font-semibold text-xs">✓ Confirmed in Stripe</span>
+                          {hasCard ? (
+                            <span className="text-green-600 font-semibold text-xs">✓ Saved in DB</span>
                           ) : (
-                            <div>
-                              <span className="text-red-500 font-semibold text-xs">✗ Not found in Stripe</span>
-                              {p.stripeError && (
-                                <div className="text-xs text-red-400 mt-0.5">{p.stripeError}</div>
-                              )}
-                            </div>
+                            <span className="text-red-500 font-semibold text-xs">✗ Missing</span>
                           )}
                         </td>
                         <td className="px-6 py-3">
-                          <Badge label={p.stripeVerified ? "Yes" : "No — card issue"} color={p.stripeVerified ? "green" : "red"} />
+                          <Badge label={hasCard ? "Will charge" : "No card — won't charge"} color={hasCard ? "green" : "red"} />
                         </td>
                       </tr>
                     );
@@ -319,10 +312,10 @@ export default async function AdminPage() {
               <tbody>
                 {recentCustomers.map((c) => {
                   const isScheduled = c.payment?.status === "scheduled";
-                  const scheduledEntry = scheduledPayments.find((p) => p.customerId === c.id);
-                  const hasCard = isScheduled ? (scheduledEntry?.stripeVerified ?? false) : false;
-                  const chargeDate = c.payment?.scheduledDate
-                    ? new Date(c.payment.scheduledDate).toLocaleDateString("en-CA", { month: "short", day: "numeric" })
+                  const hasCard = isScheduled ? !!c.payment?.stripePaymentMethodId : false;
+                  const chargeDatePST = c.payment?.scheduledDate ? datePST(new Date(c.payment.scheduledDate)) : null;
+                  const chargeDate = chargeDatePST
+                    ? new Date(chargeDatePST + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })
                     : null;
                   return (
                     <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer">
