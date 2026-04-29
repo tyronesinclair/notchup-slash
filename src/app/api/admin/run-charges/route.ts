@@ -1,17 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { stripe, PLAN_AMOUNT, PLAN_CURRENCY } from "@/lib/stripe";
 
-// Called daily by the Railway cron service.
-// Requires CRON_SECRET header to prevent unauthorized triggering.
-export async function GET(req: Request) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+// Admin-triggered version of the daily cron: charges all scheduled payments due today (PST).
+export async function POST(req: NextRequest) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_token")?.value;
+  if (!token || token !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  // Use end-of-day in America/Vancouver to handle PST/PDT correctly.
-  // Dates are stored as UTC equivalents of PST midnight, so a pure UTC cutoff
-  // (server setHours) misses payments scheduled for "today" in Vancouver time.
+
+  // End of today in America/Vancouver timezone
   const now = new Date();
   const utcMs = now.getTime();
   const vanMs = new Date(now.toLocaleString("en-US", { timeZone: "America/Vancouver" })).getTime();
@@ -19,13 +19,13 @@ export async function GET(req: Request) {
   const todayVan = now.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
   const [vy, vm, vd] = todayVan.split("-").map(Number);
   const endOfDayVan = new Date(vy, vm - 1, vd, 23, 59, 59, 999);
-  const today = new Date(endOfDayVan.getTime() + offsetMs);
+  const cutoff = new Date(endOfDayVan.getTime() + offsetMs);
 
   const due = await prisma.payment.findMany({
     where: {
       paymentType: "scheduled",
       status: "scheduled",
-      scheduledDate: { lte: today },
+      scheduledDate: { lte: cutoff },
       stripePaymentMethodId: { not: null },
     },
     include: { customer: true },
@@ -34,10 +34,8 @@ export async function GET(req: Request) {
   const results = [];
 
   for (const payment of due) {
+    const customer = payment.customer;
     try {
-      const customer = payment.customer;
-
-      // Prefer the stored Stripe customer ID; fall back to email lookup for legacy records.
       let stripeCustomerId = customer.stripeCustomerId;
       if (!stripeCustomerId) {
         const list = await stripe.customers.list({ email: customer.email, limit: 1 });
@@ -45,8 +43,7 @@ export async function GET(req: Request) {
       }
 
       if (!stripeCustomerId) {
-        console.error(`No Stripe customer found for ${customer.email}`);
-        results.push({ customerId: customer.id, status: "no_stripe_customer" });
+        results.push({ email: customer.email, status: "no_stripe_customer" });
         continue;
       }
 
@@ -70,7 +67,6 @@ export async function GET(req: Request) {
         },
       });
 
-      // Persist the Stripe customer ID if we had to look it up
       if (!customer.stripeCustomerId) {
         await prisma.customer.update({
           where: { id: customer.id },
@@ -78,16 +74,22 @@ export async function GET(req: Request) {
         });
       }
 
-      results.push({ customerId: customer.id, status: pi.status });
+      results.push({ email: customer.email, status: pi.status, chargeId: pi.id });
     } catch (err) {
-      console.error(`Failed to charge customer ${payment.customerId}:`, err);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`run-charges failed for ${customer.email}:`, err);
       await prisma.payment.update({
         where: { id: payment.id },
         data: { status: "failed" },
       });
-      results.push({ customerId: payment.customerId, status: "failed" });
+      results.push({ email: customer.email, status: "error", error: message });
     }
   }
 
-  return NextResponse.json({ processed: results.length, results });
+  return NextResponse.json({
+    cutoff: cutoff.toISOString(),
+    found: due.length,
+    processed: results.length,
+    results,
+  });
 }

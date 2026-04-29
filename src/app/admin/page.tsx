@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
+import RunChargesButton from "./RunChargesButton";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -189,12 +190,13 @@ export default async function AdminPage() {
                   Card status based on DB record. Use &ldquo;Verify with Stripe&rdquo; for live confirmation. Charged at 8am PST on chosen date.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 flex-wrap">
                 {missingCardCount > 0 && (
                   <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
                     ⚠ {missingCardCount} no card saved
                   </span>
                 )}
+                <RunChargesButton />
                 <Link href="/api/admin/scheduled-check" target="_blank" className="text-xs text-violet-600 hover:underline font-semibold">
                   Verify with Stripe →
                 </Link>
