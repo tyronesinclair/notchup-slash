@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
+import RetryChargeButton from "./RetryChargeButton";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -30,7 +31,7 @@ async function getStats() {
     prisma.customer.count(),
     prisma.payment.count({ where: { status: "paid" } }),
     prisma.payment.findMany({
-      where: { status: "scheduled" },
+      where: { status: { in: ["scheduled", "failed"] } },
       include: { customer: true },
       orderBy: { scheduledDate: "asc" },
     }),
@@ -113,8 +114,9 @@ export default async function AdminPage() {
   const contactSubmits = eventMap["contact_submit"] ?? 0;
   const credentialsSubmits = eventMap["credentials_submit"] ?? 0;
 
-  const scheduledTotal = scheduledPayments.length;
-  const cardInDbCount = scheduledPayments.filter((p) => !!p.stripePaymentMethodId).length;
+  const scheduledTotal = scheduledPayments.filter((p) => p.status === "scheduled").length;
+  const failedTotal = scheduledPayments.filter((p) => p.status === "failed").length;
+  const cardInDbCount = scheduledPayments.filter((p) => p.status === "scheduled" && !!p.stripePaymentMethodId).length;
   const missingCardCount = scheduledTotal - cardInDbCount;
   const collectedRevenue = (totalRevenueCents / 100).toFixed(2);
   const scheduledRevenue = (scheduledTotal * 35).toFixed(2);
@@ -213,13 +215,12 @@ export default async function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {scheduledPayments.map((p) => {
+                  {scheduledPayments.filter((p) => p.status === "scheduled").map((p) => {
                     const hasCard = !!p.stripePaymentMethodId;
                     const chargeDatePST = p.scheduledDate ? datePST(new Date(p.scheduledDate)) : null;
                     const chargeLabel = chargeDatePST
                       ? new Date(chargeDatePST + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
                       : "—";
-                    // Overdue only if the date has passed in PST (strictly before today)
                     const isOverdue = chargeDatePST ? chargeDatePST < today : false;
                     return (
                       <tr key={p.id} className="border-b border-gray-50">
@@ -251,6 +252,35 @@ export default async function AdminPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Failed charges */}
+            {failedTotal > 0 && (
+              <div className="border-t border-red-100 px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-red-700 uppercase tracking-widest">
+                    ⚠ {failedTotal} declined / failed
+                  </p>
+                  <p className="text-xs text-gray-400">Retry individually when ready</p>
+                </div>
+                <div className="space-y-2">
+                  {scheduledPayments.filter((p) => p.status === "failed").map((p) => {
+                    const chargeDatePST = p.scheduledDate ? datePST(new Date(p.scheduledDate)) : null;
+                    const chargeLabel = chargeDatePST
+                      ? new Date(chargeDatePST + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
+                      : "—";
+                    return (
+                      <div key={p.id} className="flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{p.customer.name}</div>
+                          <div className="text-xs text-gray-400">{p.customer.email} · scheduled {chargeLabel}</div>
+                        </div>
+                        <RetryChargeButton paymentId={p.id} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
