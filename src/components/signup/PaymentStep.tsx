@@ -15,6 +15,35 @@ type Props = {
   onBack: () => void;
 };
 
+const PROVIDER_SAVINGS: Record<string, number> = {
+  Rogers: 487,
+  Bell: 462,
+  Telus: 441,
+  Videotron: 390,
+  "Freedom Mobile": 320,
+  Koodo: 310,
+  Fido: 298,
+  "Virgin Plus": 305,
+};
+
+function SavingsEstimate({ services }: { services: FormData["services"] }) {
+  const providers = [...new Set(services.map((s) => s.provider))];
+  const maxSavings = providers.reduce((max, p) => {
+    const n = PROVIDER_SAVINGS[p] ?? 400;
+    return n > max ? n : max;
+  }, 400);
+  const provider = providers[0] ?? "Canadians";
+  const label = providers.length === 1 ? `${provider} customers` : "customers like you";
+  return (
+    <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+      <span className="text-green-600 text-lg shrink-0">💰</span>
+      <p className="text-xs text-green-800 leading-snug">
+        <strong>{label} save an average of ${maxSavings}/year</strong> — that&apos;s {Math.round(maxSavings / 35)}× your $35 back in the first year alone.
+      </p>
+    </div>
+  );
+}
+
 function PaymentForm({
   formData,
   onPaymentTypeChange,
@@ -47,7 +76,7 @@ function PaymentForm({
     setError(null);
 
     const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
-    const billingDetails = { name: formData.name, email: formData.email, phone: formData.phone };
+    const billingDetails = { name: formData.name, email: formData.email };
 
     try {
       if (paymentType === "immediate") {
@@ -77,12 +106,10 @@ function PaymentForm({
     }
   };
 
-  // Min date: tomorrow
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split("T")[0];
 
-  // Max date: 60 days out
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + 60);
   const maxDateStr = maxDate.toISOString().split("T")[0];
@@ -92,26 +119,15 @@ function PaymentForm({
       <h2 className="text-lg font-extrabold text-gray-900 mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>
         Activation fee — $35 CAD
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
-        One-time fee to activate your account. Fully refunded if we can't save you $100+/year or if you reject our proposal.
+      <p className="text-sm text-gray-500 mb-5">
+        One-time fee to start your negotiation.
       </p>
 
+      {/* Savings estimate */}
+      <SavingsEstimate services={formData.services} />
+
       {/* Payment type toggle */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6">
-        <button
-          type="button"
-          onClick={() => handlePaymentTypeChange("immediate")}
-          className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border text-sm font-semibold transition-all"
-          style={{
-            borderColor: paymentType === "immediate" ? "#7F56D9" : "#EAECF0",
-            background: paymentType === "immediate" ? "#F4EBFF" : "#fff",
-            color: paymentType === "immediate" ? "#6941C6" : "#344054",
-          }}
-        >
-          <Zap size={18} />
-          <span>Pay Now</span>
-          <span className="text-xs font-normal opacity-70">Start immediately</span>
-        </button>
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
         <button
           type="button"
           onClick={() => handlePaymentTypeChange("scheduled")}
@@ -124,13 +140,27 @@ function PaymentForm({
         >
           <Calendar size={18} />
           <span>Pay on Payday</span>
-          <span className="text-xs font-normal opacity-70">Pick any date ≤ 60 days</span>
+          <span className="text-xs font-normal opacity-70">Save card · charge later</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handlePaymentTypeChange("immediate")}
+          className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border text-sm font-semibold transition-all"
+          style={{
+            borderColor: paymentType === "immediate" ? "#7F56D9" : "#EAECF0",
+            background: paymentType === "immediate" ? "#F4EBFF" : "#fff",
+            color: paymentType === "immediate" ? "#6941C6" : "#344054",
+          }}
+        >
+          <Zap size={18} />
+          <span>Pay Now</span>
+          <span className="text-xs font-normal opacity-70">Charge immediately</span>
         </button>
       </div>
 
       {/* Scheduled date picker */}
       {paymentType === "scheduled" && (
-        <div className="mb-6">
+        <div className="mb-5">
           <label className="block text-xs font-semibold text-gray-700 mb-1.5">
             Choose your payday date
           </label>
@@ -144,13 +174,13 @@ function PaymentForm({
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400"
           />
           <p className="text-xs text-gray-400 mt-1.5">
-            We save your card today and charge on this date. Your spot in queue is secured immediately.
+            We save your card today and charge on this date. Up to 60 days out.
           </p>
         </div>
       )}
 
       {/* Stripe Elements */}
-      <div className="mb-6">
+      <div className="mb-5">
         <label className="block text-xs font-semibold text-gray-700 mb-2">Card details</label>
         <div className="rounded-lg border border-gray-300 p-3">
           <PaymentElement
@@ -160,6 +190,7 @@ function PaymentForm({
             }}
           />
         </div>
+        <p className="text-xs text-gray-400 mt-1.5">Apple Pay &amp; Google Pay supported where available.</p>
       </div>
 
       {error && (
@@ -168,8 +199,18 @@ function PaymentForm({
         </div>
       )}
 
+      {/* Guarantee — unmissable */}
+      <div className="mb-5 rounded-xl border-2 border-green-300 bg-green-50 px-4 py-4 text-center">
+        <div className="text-base font-extrabold text-green-800 mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
+          You pay nothing if we can&apos;t save you $100+
+        </div>
+        <div className="text-xs text-green-700">
+          Full $35 refunded. No questions asked. Zero risk.
+        </div>
+      </div>
+
       {/* Summary */}
-      <div className="mb-6 bg-gray-50 rounded-xl p-4 text-sm">
+      <div className="mb-5 bg-gray-50 rounded-xl p-4 text-sm">
         <div className="flex justify-between items-center mb-2">
           <span className="text-gray-600">Activation fee</span>
           <span className="font-bold text-gray-900">$35.00 CAD</span>
@@ -198,9 +239,9 @@ function PaymentForm({
         )}
       </button>
 
-      <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-400">
+      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-400">
         <ShieldCheck size={13} />
-        <span>Secured by Stripe. Fully refunded if we can't save you $100+/year.</span>
+        <span>Secured by Stripe · Encrypted · Refundable</span>
       </div>
     </form>
   );

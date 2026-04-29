@@ -4,11 +4,6 @@ export default function CTA() {
   return (
     <section id="cta" className="final">
       <div className="container final-inner">
-        <div className="pill" style={{ background: "color-mix(in oklab, var(--accent-soft) 50%, transparent)", borderColor: "color-mix(in oklab, var(--accent) 35%, transparent)" }}>
-          <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--accent-ink)", flexShrink: 0 }} />
-          3–5 week queue · spots filling fast
-        </div>
-
         <h2 className="final-h">
           Stop overpaying.<br />
           <span style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400 }}>

@@ -17,7 +17,6 @@ export type FormData = {
   services: ServiceEntry[];
   name: string;
   email: string;
-  phone: string;
   paymentType: "immediate" | "scheduled";
   scheduledDate: string;
 };
@@ -31,8 +30,7 @@ export default function SignUpForm() {
     services: [],
     name: "",
     email: "",
-    phone: "",
-    paymentType: "immediate",
+    paymentType: "scheduled",
     scheduledDate: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +46,7 @@ export default function SignUpForm() {
   const updateFormData = (patch: Partial<FormData>) =>
     setFormData((prev) => ({ ...prev, ...patch }));
 
-  const handleContactNext = (contact: { name: string; email: string; phone: string }) => {
+  const handleContactNext = (contact: { name: string; email: string }) => {
     updateFormData(contact);
     next();
   };
@@ -126,7 +124,7 @@ export default function SignUpForm() {
       <div className="p-6 md:p-8">
         {step === 0 && (
           <ContactStep
-            initial={{ name: formData.name, email: formData.email, phone: formData.phone }}
+            initial={{ name: formData.name, email: formData.email }}
             onNext={handleContactNext}
           />
         )}

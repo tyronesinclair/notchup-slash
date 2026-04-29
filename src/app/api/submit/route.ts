@@ -5,10 +5,10 @@ import { sendConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, phone, services, paymentType, scheduledDate, stripePaymentIntentId } =
+    const { name, email, phone = "", services, paymentType, scheduledDate, stripePaymentIntentId } =
       await req.json();
 
-    if (!name || !email || !phone || !services?.length) {
+    if (!name || !email || !services?.length) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 

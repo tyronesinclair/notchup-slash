@@ -2,27 +2,18 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-type ContactData = { name: string; email: string; phone: string };
-type FieldError = { name?: string; email?: string; phone?: string };
+type ContactData = { name: string; email: string };
+type FieldError = { name?: string; email?: string };
 
 type Props = {
   initial: ContactData;
   onNext: (data: ContactData) => void;
 };
 
-function formatPhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
 function validate(data: ContactData): FieldError {
   const errors: FieldError = {};
   if (!data.name.trim() || data.name.trim().length < 2) errors.name = "Please enter your full name.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.email = "Please enter a valid email address.";
-  const digits = data.phone.replace(/\D/g, "");
-  if (digits.length !== 10) errors.phone = "Please enter a valid 10-digit Canadian phone number.";
   return errors;
 }
 
@@ -33,7 +24,7 @@ export default function ContactStep({ initial, onNext }: Props) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const update = (k: keyof ContactData, v: string) => {
-    const next = { ...data, [k]: k === "phone" ? formatPhone(v) : v };
+    const next = { ...data, [k]: v };
     setData(next);
     if (touched[k]) {
       const errs = validate(next);
@@ -52,7 +43,7 @@ export default function ContactStep({ initial, onNext }: Props) {
     const errs = validate(data);
     if (Object.keys(errs).length) {
       setErrors(errs);
-      setTouched({ name: true, email: true, phone: true });
+      setTouched({ name: true, email: true });
       return;
     }
     const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
@@ -103,21 +94,6 @@ export default function ContactStep({ initial, onNext }: Props) {
             className={fieldClass("email")}
           />
           {errors.email && touched.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone number</label>
-          <input
-            type="tel"
-            value={data.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            onBlur={() => blur("phone")}
-            placeholder="(416) 555-0123"
-            autoComplete="tel"
-            inputMode="numeric"
-            className={fieldClass("phone")}
-          />
-          {errors.phone && touched.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
         </div>
       </div>
 
