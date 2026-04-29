@@ -6,6 +6,7 @@ import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // Returns today's date string (YYYY-MM-DD) in Pacific time
