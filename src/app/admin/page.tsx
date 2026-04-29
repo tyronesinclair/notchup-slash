@@ -37,7 +37,7 @@ async function getStats() {
       orderBy: { scheduledDate: "asc" },
     }),
     prisma.customer.findMany({
-      take: 20,
+      take: 100,
       orderBy: { createdAt: "desc" },
       include: { payment: true, services: true },
     }),
