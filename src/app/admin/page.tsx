@@ -3,8 +3,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
+import { Suspense } from "react";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
+import CustomerFilters from "./CustomerFilters";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -19,12 +21,13 @@ function datePST(d: Date) {
   return d.toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
 }
 
+const PAGE_SIZE = 25;
+
 async function getStats() {
   const [
     totalCustomers,
     paidPayments,
     scheduledPayments,
-    recentCustomers,
     eventCounts,
     revenueResult,
     credentialsCount,
@@ -35,11 +38,6 @@ async function getStats() {
       where: { status: { in: ["scheduled", "failed"] } },
       include: { customer: true },
       orderBy: { scheduledDate: "asc" },
-    }),
-    prisma.customer.findMany({
-      take: 100,
-      orderBy: { createdAt: "desc" },
-      include: { payment: true, services: true },
     }),
     prisma.analyticsEvent.groupBy({
       by: ["event"],
@@ -60,11 +58,50 @@ async function getStats() {
     totalCustomers,
     paidPayments,
     scheduledPayments,
-    recentCustomers,
     eventMap,
     totalRevenueCents: revenueResult._sum.amount ?? 0,
     credentialsCount,
   };
+}
+
+async function getCustomers(opts: {
+  page: number;
+  search?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+}) {
+  const { page, search, status, from, to } = opts;
+  const where: Record<string, unknown> = {};
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
+  }
+  if (status) {
+    where.payment = { status };
+  }
+  if (from || to) {
+    where.createdAt = {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to + "T23:59:59") } : {}),
+    };
+  }
+
+  const [customers, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+      orderBy: { createdAt: "desc" },
+      include: { payment: true, services: true },
+    }),
+    prisma.customer.count({ where }),
+  ]);
+
+  return { customers, total, pages: Math.ceil(total / PAGE_SIZE) };
 }
 
 function Badge({
@@ -91,7 +128,11 @@ function Badge({
   );
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; search?: string; status?: string; from?: string; to?: string }>;
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
 
@@ -99,12 +140,19 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const stats = await getStats();
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1"));
+
+  const [stats, customerData] = await Promise.all([
+    getStats(),
+    getCustomers({ page, search: sp.search, status: sp.status, from: sp.from, to: sp.to }),
+  ]);
+
+  const { customers, total: customerTotal, pages: totalPages } = customerData;
   const {
     totalCustomers,
     paidPayments,
     scheduledPayments,
-    recentCustomers,
     eventMap,
     totalRevenueCents,
     credentialsCount,
@@ -324,11 +372,15 @@ export default async function AdminPage() {
 
         {/* All customers */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>
               All customers
+              <span className="ml-2 text-xs font-normal text-gray-400">({customerTotal})</span>
             </h2>
           </div>
+          <Suspense>
+            <CustomerFilters />
+          </Suspense>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -343,7 +395,7 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentCustomers.map((c) => {
+                {customers.map((c) => {
                   const isScheduled = c.payment?.status === "scheduled";
                   const hasCard = isScheduled ? !!c.payment?.stripePaymentMethodId : false;
                   const chargeDatePST = c.payment?.scheduledDate ? datePST(new Date(c.payment.scheduledDate)) : null;
@@ -391,16 +443,52 @@ export default async function AdminPage() {
                     </tr>
                   );
                 })}
-                {recentCustomers.length === 0 && (
+                {customers.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-6 py-8 text-center text-gray-400 text-sm">
-                      No signups yet.
+                      No customers match your filters.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+              <p className="text-xs text-gray-400">
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, customerTotal)} of {customerTotal}
+              </p>
+              <div className="flex items-center gap-1">
+                {page > 1 && (
+                  <Link
+                    href={`?${new URLSearchParams({ ...sp, page: String(page - 1) }).toString()}`}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    ← Prev
+                  </Link>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <Link
+                    key={p}
+                    href={`?${new URLSearchParams({ ...sp, page: String(p) }).toString()}`}
+                    className={`px-3 py-1.5 text-xs rounded-lg border ${p === page ? "border-violet-500 bg-violet-50 text-violet-700 font-bold" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                  >
+                    {p}
+                  </Link>
+                ))}
+                {page < totalPages && (
+                  <Link
+                    href={`?${new URLSearchParams({ ...sp, page: String(page + 1) }).toString()}`}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Next →
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
