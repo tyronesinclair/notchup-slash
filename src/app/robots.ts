@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup-slash-production.up.railway.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,7 +8,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/slash/",
-        disallow: ["/slash/admin/", "/slash/confirmation/"],
+        disallow: [
+          "/slash/admin/",
+          "/slash/confirmation/",
+          "/slash/api/",
+        ],
       },
     ],
     sitemap: `${SITE_URL}/slash/sitemap.xml`,

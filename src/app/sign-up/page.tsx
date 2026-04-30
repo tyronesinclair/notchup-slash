@@ -5,11 +5,16 @@ import Footer from "@/components/Footer";
 import PageTracker from "@/components/PageTracker";
 import { ShieldCheck, Clock } from "lucide-react";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app";
+
 export const metadata: Metadata = {
   title: "Get Started — Lower Your Rogers, Bell & Telus Bills",
   description:
     "Takes 2 minutes. Our AI negotiates with Rogers, Bell & Telus to cut your internet and phone bills. $35 activation — fully refunded if we can't save you $100+/year.",
-  robots: { index: true, follow: false },
+  alternates: {
+    canonical: `${SITE_URL}/slash/sign-up`,
+  },
+  robots: { index: false, follow: true },
 };
 
 export default function SignUpPage() {
