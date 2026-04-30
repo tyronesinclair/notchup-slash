@@ -34,7 +34,7 @@ const openSans = Open_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup-slash-production.up.railway.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -104,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${interTight.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${openSans.variable} h-full`}>
+    <html lang="en-CA" className={`${interTight.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${openSans.variable} h-full`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

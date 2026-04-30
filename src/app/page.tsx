@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "NotchUp Slash uses AI to negotiate lower rates on your Rogers, Bell & Telus internet and phone bills. Average savings $487/yr. $35 flat fee — free if we can't save you $100+.",
   alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup-slash-production.up.railway.app"}/slash`,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app"}/slash`,
   },
 };
 import Providers from "@/components/landing/Providers";

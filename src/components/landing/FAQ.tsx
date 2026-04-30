@@ -1,5 +1,5 @@
-"use client";
-import { useState } from "react";
+// Server component — no "use client" needed. Uses <details>/<summary> for
+// native accordion behaviour: fully crawlable by Google, zero JS, animates via CSS.
 
 const items = [
   { q: "Is my login information actually safe?", a: "Yes. Credentials are encrypted with bank-grade AES-256 in transit and at rest, scoped to a single negotiation, and rotated automatically when we're done. We never store unmasked credentials and we never share them with third parties." },
@@ -8,13 +8,11 @@ const items = [
   { q: "How long does the process take?", a: "Most negotiations close in 3–5 weeks. Some are faster, some are slower depending on the carrier's queue. You'll see status updates the whole way through." },
   { q: "Which providers do you negotiate?", a: "Rogers, Bell, Telus, Freedom Mobile, Videotron, Fido, Koodo, Virgin Plus, and most regional Canadian carriers. We support both internet and mobile lines." },
   { q: "Can I add multiple services?", a: "Yes — add as many lines and services as you want under one $35 activation. We negotiate them in parallel." },
-  { q: "Is this available across Canada?", a: "Yes, we serve every province and territory. Notchup Slash is exclusive to Notchup members." },
+  { q: "Is this available across Canada?", a: "Yes, we serve every province and territory. NotchUp Slash is exclusive to NotchUp members." },
   { q: "What's the 40% based on?", a: "It's 40% of the savings we secure for the first 12 months only. Every dollar saved after month 12 is 100% yours, forever." },
 ];
 
 export default function FAQ() {
-  const [open, setOpen] = useState<number>(0);
-
   return (
     <section id="faq" className="faq">
       <div className="container faq-grid">
@@ -34,19 +32,15 @@ export default function FAQ() {
 
         <div className="faq-list">
           {items.map((it, i) => (
-            <div
-              key={i}
-              className={`faq-item ${open === i ? "open" : ""}`}
-              onClick={() => setOpen(open === i ? -1 : i)}
-            >
-              <div className="faq-q">
+            <details key={i} className="faq-item" open={i === 0}>
+              <summary className="faq-q">
                 <span>{it.q}</span>
-                <span className="faq-plus" aria-hidden>{open === i ? "−" : "+"}</span>
-              </div>
+                <span className="faq-plus" aria-hidden>+</span>
+              </summary>
               <div className="faq-a-wrap">
                 <div className="faq-a">{it.a}</div>
               </div>
-            </div>
+            </details>
           ))}
         </div>
       </div>

@@ -1,4 +1,4 @@
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup-slash-production.up.railway.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app";
 
 const serviceSchema = {
   "@context": "https://schema.org",
@@ -31,11 +31,6 @@ const serviceSchema = {
     price: "35",
     priceCurrency: "CAD",
     description: "One-time activation fee. Fully refunded if we can't save you $100+/year.",
-  },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    reviewCount: "124",
   },
 };
 

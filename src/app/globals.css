@@ -584,18 +584,23 @@ img, svg { display: block; }
 .faq { padding: 120px 0; background: var(--bg-soft); border-top: 1px solid var(--line); }
 .faq-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 80px; align-items: start; }
 .faq-list { display: flex; flex-direction: column; }
-.faq-item { border-top: 1px solid var(--line); padding: 22px 0; cursor: pointer; }
+/* <details> resets */
+.faq-item { border-top: 1px solid var(--line); padding: 22px 0; cursor: pointer; list-style: none; }
 .faq-item:last-child { border-bottom: 1px solid var(--line); }
+.faq-item summary { list-style: none; }
+.faq-item summary::-webkit-details-marker { display: none; }
 .faq-q {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
   font-size: 18px; font-weight: 500; letter-spacing: -0.015em; color: var(--ink);
+  cursor: pointer;
 }
-.faq-plus { font-size: 24px; color: var(--muted); width: 24px; text-align: center; transition: color .2s; }
+.faq-plus { font-size: 24px; color: var(--muted); width: 24px; text-align: center; transition: color .2s, transform .25s; }
 .faq-item:hover .faq-plus { color: var(--accent-ink); }
+.faq-item[open] .faq-plus { transform: rotate(45deg); color: var(--accent-ink); }
 .faq-a-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
-.faq-item.open .faq-a-wrap { grid-template-rows: 1fr; }
+.faq-item[open] .faq-a-wrap { grid-template-rows: 1fr; }
 .faq-a { overflow: hidden; font-size: 16px; color: var(--ink-soft); line-height: 1.6; max-width: 620px; }
-.faq-item.open .faq-a { padding-top: 14px; }
+.faq-item[open] .faq-a { padding-top: 14px; }
 
 /* ── Final CTA ─────────────────────────────────────── */
 .final {
@@ -730,7 +735,7 @@ img, svg { display: block; }
   .example { padding: 22px 20px; }
   .faq { padding: 64px 0; }
   .faq-grid { gap: 32px; }
-  .faq-item { padding: 18px 0; }
+  .faq-item { padding: 18px 0; list-style: none; }
   .faq-q { font-size: 16px; gap: 12px; }
   .faq-a { font-size: 15px; }
   .final { padding: 80px 0 100px; }
