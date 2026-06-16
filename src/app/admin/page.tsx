@@ -355,7 +355,7 @@ export default async function AdminPage({
                     return (
                       <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                         <td className="px-4 py-3">
-                          <input type="checkbox" name="id" value={c.id} defaultChecked className="w-4 h-4 accent-violet-600 align-middle" />
+                          <input type="checkbox" name="id" value={c.id} className="w-4 h-4 accent-violet-600 align-middle" />
                         </td>
                         <td className="px-6 py-3">
                           <a href={`/slash/admin/customers/${c.id}`} className="block group">
