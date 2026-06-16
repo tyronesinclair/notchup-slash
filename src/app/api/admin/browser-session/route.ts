@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { getOrCreateSession } from "@/lib/browserbase";
+import { getProviderLogin } from "@/lib/providers";
 
 // Starts (or resumes) the persistent remote browser for a customer's telco activation.
 // Returns the Live View URL for the operator to drive by hand.
@@ -12,18 +13,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { customerId } = await req.json();
+  const { customerId, startUrl } = await req.json();
   if (!customerId) {
     return NextResponse.json({ error: "customerId required" }, { status: 400 });
   }
 
-  const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    include: { services: true },
+  });
   if (!customer) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
   }
 
+  // Where to open the browser: an explicit override, else the provider's login page.
+  const provider = customer.services[0]?.provider;
+  const resolvedStartUrl =
+    (typeof startUrl === "string" && startUrl.trim()) ||
+    getProviderLogin(provider)?.loginUrl ||
+    null;
+
   try {
-    const session = await getOrCreateSession({ existingContextId: customer.browserbaseContextId });
+    const session = await getOrCreateSession({
+      existingContextId: customer.browserbaseContextId,
+      startUrl: resolvedStartUrl,
+    });
 
     await prisma.customer.update({
       where: { id: customerId },

@@ -30,6 +30,7 @@ export type ActivationSession = {
  */
 export async function getOrCreateSession(opts: {
   existingContextId: string | null;
+  startUrl?: string | null;
 }): Promise<ActivationSession> {
   if (!browserbaseConfigured()) {
     return {
@@ -63,6 +64,24 @@ export async function getOrCreateSession(opts: {
     },
     proxies: [{ type: "browserbase" as const, geolocation: { country: proxyCountry } }],
   });
+
+  // Pre-navigate the remote browser to the telco login page so the operator lands
+  // ready-to-type instead of an empty tab. Best-effort: if it fails, the session is
+  // still usable and the operator can navigate manually. playwright-core is imported
+  // lazily so it doesn't load on every dashboard render.
+  if (opts.startUrl && session.connectUrl) {
+    try {
+      const { chromium } = await import("playwright-core");
+      const browser = await chromium.connectOverCDP(session.connectUrl);
+      const ctx = browser.contexts()[0] ?? (await browser.newContext());
+      const page = ctx.pages()[0] ?? (await ctx.newPage());
+      await page.goto(opts.startUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+      // keepAlive: true keeps the Browserbase session running after we disconnect.
+      await browser.close();
+    } catch (err) {
+      console.error("[browserbase] pre-navigation failed:", err);
+    }
+  }
 
   const debug = await bb.sessions.debug(session.id);
 
