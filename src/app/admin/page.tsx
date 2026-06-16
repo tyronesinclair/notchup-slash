@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
-import { Suspense } from "react";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
 import CustomerFilters from "./CustomerFilters";
@@ -380,9 +379,7 @@ export default async function AdminPage({
               <span className="ml-2 text-xs font-normal text-gray-400">({customerTotal})</span>
             </h2>
           </div>
-          <Suspense>
-            <CustomerFilters />
-          </Suspense>
+          <CustomerFilters search={sp.search} status={sp.status} from={sp.from} to={sp.to} />
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
