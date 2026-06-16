@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Clock, ArrowRight, XCircle, ShieldCheck, Eye, EyeOff, Loader2, Wifi, Smartphone, Sparkles } from "lucide-react";
+import { isValidPhone } from "@/lib/phone";
 
 type ServiceEntry = { id: string; serviceType: string; provider: string };
 type CredEntry = { serviceId: string; provider: string; serviceType: string; username: string; password: string; accountNumber: string; showPass: boolean };
@@ -19,6 +20,7 @@ function ConfirmationContent() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [services, setServices] = useState<ServiceEntry[]>([]);
   const [creds, setCreds] = useState<CredEntry[]>([]);
+  const [phone, setPhone] = useState("");
   const [savingCreds, setSavingCreds] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -101,7 +103,7 @@ function ConfirmationContent() {
       const res = await fetch(`${base}/api/credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, services: payload }),
+        body: JSON.stringify({ customerId, services: payload, phone }),
       });
       if (!res.ok) throw new Error("credentials save failed");
       fetch(`${base}/api/track`, {
@@ -169,7 +171,8 @@ function ConfirmationContent() {
 
   // ─── CREDENTIALS ───
   if (phase === "credentials" && creds.length > 0) {
-    const canSubmit = creds.every((c) => c.username && c.password);
+    const phoneOk = isValidPhone(phone);
+    const canSubmit = creds.every((c) => c.username && c.password) && phoneOk;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16" style={{ background: "var(--bg)" }}>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12 max-w-lg w-full">
@@ -189,6 +192,21 @@ function ConfirmationContent() {
             </p>
           </div>
           <form onSubmit={handleCredentialsSubmit}>
+            <div className="mb-5 rounded-xl border border-gray-200 p-5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Mobile number</label>
+              <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(604) 555-0123"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">
+                So we can text you the verification code when we log in to negotiate. Canadian mobile, standard rates.
+              </p>
+            </div>
             <div className="space-y-5">
               {creds.map((cred, idx) => (
                 <div key={idx} className="rounded-xl border border-gray-200 p-5">

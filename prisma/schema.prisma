@@ -8,16 +8,18 @@ datasource db {
 }
 
 model Customer {
-  id               String    @id @default(cuid())
-  name             String
-  email            String    @unique
-  phone            String
-  stripeCustomerId String?
-  status           String    @default("pending")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  services         Service[]
-  payment          Payment?
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  phone                String
+  stripeCustomerId     String?
+  status               String    @default("pending")
+  browserbaseContextId String?   // persistent telco-login browser profile (trust-cookie store)
+  activationStatus     String    @default("not_started") // not_started | in_progress | activated | failed
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  services             Service[]
+  payment              Payment?
 }
 
 model Service {
@@ -40,6 +42,20 @@ model AnalyticsEvent {
   createdAt DateTime @default(now())
 
   @@index([event])
+  @@index([createdAt])
+}
+
+model SmsMessage {
+  id         String   @id @default(cuid())
+  customerId String?              // null if an inbound number matched no customer
+  direction  String               // "outbound" | "inbound"
+  fromNumber String?
+  toNumber   String?
+  body       String
+  code       String?              // parsed 4–8 digit code from inbound body
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
   @@index([createdAt])
 }
 

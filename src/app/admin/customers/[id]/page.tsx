@@ -5,7 +5,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { ArrowLeft, Wifi, Smartphone } from "lucide-react";
+import OperatorConsole from "./OperatorConsole";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 type DecryptedCred = {
@@ -72,6 +74,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </div>
           </div>
         </div>
+
+        {/* Operator activation console */}
+        <OperatorConsole
+          customerId={customer.id}
+          phone={customer.phone}
+          activationStatus={customer.activationStatus}
+          provider={customer.services[0]?.provider ?? "your provider"}
+        />
 
         {/* Payment */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
