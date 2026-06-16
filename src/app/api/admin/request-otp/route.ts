@@ -53,5 +53,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.error ?? "Send failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ sent: result.sent, mock: result.mock, to });
+  return NextResponse.json({ sent: result.sent, mock: result.mock, to, body });
 }

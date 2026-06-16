@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle, ExternalLink, StickyNote } from "lucide-react";
 import { formatDisplay } from "@/lib/phone";
+import LiveView from "../../LiveView";
 
 type Props = {
   customerId: string;
@@ -105,6 +106,7 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
   const [requesting, setRequesting] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [mockSms, setMockSms] = useState(false);
+  const [sentBody, setSentBody] = useState<string | null>(null);
   const [otpErr, setOtpErr] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<string[]>([]);
@@ -156,6 +158,7 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
       if (!res.ok) { setOtpErr(data.error ?? "Failed to send"); return; }
       setOtpSent(true);
       setMockSms(!!data.mock);
+      setSentBody(data.body ?? null);
       setPollTimedOut(false);
       pollCountRef.current = 0;
       setPolling(true);
@@ -295,17 +298,9 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
             {starting ? <><Loader2 size={15} className="animate-spin" /> Opening browser…</> : <><Monitor size={15} /> Start activation</>}
           </button>
         ) : (
-          <div className="space-y-3">
-            {mockBrowser && (
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                <AlertTriangle size={13} /> MOCK — no Browserbase key set. This is a placeholder browser.
-              </div>
-            )}
-            <iframe src={liveUrl} className="w-full rounded-lg border border-gray-300 bg-gray-900" style={{ height: 460 }} title="Live View" allow="clipboard-read; clipboard-write" />
-            <div className="flex items-center justify-between">
-              <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-violet-600">
-                Open live view in a new tab <ExternalLink size={11} />
-              </a>
+          <div className="space-y-2">
+            <LiveView url={liveUrl} mock={mockBrowser} height={560} />
+            <div className="flex justify-end">
               <button onClick={startActivation} disabled={starting} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50">
                 {starting ? "Reconnecting…" : "Reconnect"}
               </button>
@@ -353,6 +348,16 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
             {mockSms && (
               <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                 <AlertTriangle size={13} /> MOCK — no Twilio key set. No real text was sent.
+              </div>
+            )}
+
+            {/* The exact message the customer received */}
+            {sentBody && (
+              <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-500 mb-0.5">
+                  {mockSms ? "Would text customer" : "Texted customer"}
+                </div>
+                <div className="text-xs text-gray-700 italic">&ldquo;{sentBody}&rdquo;</div>
               </div>
             )}
 

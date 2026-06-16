@@ -326,16 +326,21 @@ export default async function AdminPage({
         {/* Activation queue — operator worklist */}
         {activationQueue.length > 0 && (
           <div className="bg-white rounded-xl border-2 overflow-hidden" style={{ borderColor: "#7F56D9" }}>
-            <div className="px-6 py-4 border-b border-gray-100">
+            <form action="/slash/admin/batch" method="get">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
               <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>
                 ⚡ Activation queue
                 <span className="ml-2 text-xs font-normal text-gray-400">({activationQueue.length}) · gave us credentials, not activated yet — oldest first</span>
               </h2>
+              <button type="submit" className="shrink-0 text-xs font-bold text-white px-3 py-1.5 rounded-lg hover:opacity-90" style={{ background: "#4F4EA5" }}>
+                Activate selected in batch →
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    <th className="px-4 py-3 w-8"></th>
                     <th className="text-left px-6 py-3">Customer</th>
                     <th className="text-left px-6 py-3">Provider(s)</th>
                     <th className="text-left px-6 py-3">Phone</th>
@@ -349,6 +354,9 @@ export default async function AdminPage({
                     const phoneOk = !!formatDisplay(c.phone);
                     return (
                       <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <input type="checkbox" name="id" value={c.id} defaultChecked className="w-4 h-4 accent-violet-600 align-middle" />
+                        </td>
                         <td className="px-6 py-3">
                           <a href={`/slash/admin/customers/${c.id}`} className="block group">
                             <span className="font-medium text-gray-900 group-hover:text-violet-600 block">{c.name}</span>
@@ -379,6 +387,7 @@ export default async function AdminPage({
                 </tbody>
               </table>
             </div>
+            </form>
           </div>
         )}
 
