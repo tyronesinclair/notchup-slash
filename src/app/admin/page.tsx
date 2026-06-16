@@ -274,10 +274,12 @@ export default async function AdminPage({
                     return (
                       <tr key={p.id} className="border-b border-gray-50">
                         <td className="px-6 py-3">
-                          <Link href={`/admin/customers/${p.customerId}`} className="font-medium text-gray-900 hover:text-violet-600 transition-colors">
-                            {p.customer.name}
-                          </Link>
-                          <div className="text-xs text-gray-400">{p.customer.email}</div>
+                          <a href={`/slash/admin/customers/${p.customerId}`} className="block group">
+                            <span className="font-medium text-gray-900 group-hover:text-violet-600 transition-colors block">
+                              {p.customer.name}
+                            </span>
+                            <span className="text-xs text-gray-400">{p.customer.email}</span>
+                          </a>
                         </td>
                         <td className="px-6 py-3">
                           <span className={`font-medium ${isOverdue ? "text-red-600" : "text-gray-900"}`}>
@@ -403,12 +405,14 @@ export default async function AdminPage({
                     ? new Date(chargeDatePST + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })
                     : null;
                   return (
-                    <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-3">
-                        <Link href={`/admin/customers/${c.id}`} className="font-medium text-gray-900 hover:text-violet-600 transition-colors block">
-                          {c.name}
-                        </Link>
-                        <span className="text-xs text-gray-400">{c.email}</span>
+                        <a href={`/slash/admin/customers/${c.id}`} className="block group">
+                          <span className="font-medium text-gray-900 group-hover:text-violet-600 transition-colors block">
+                            {c.name}
+                          </span>
+                          <span className="text-xs text-gray-400 group-hover:text-violet-400">{c.email}</span>
+                        </a>
                       </td>
                       <td className="px-6 py-3 text-gray-500 text-xs">
                         {c.services.map((s) => `${s.provider} (${s.serviceType === "internet" ? "net" : "cell"})`).join(", ")}
