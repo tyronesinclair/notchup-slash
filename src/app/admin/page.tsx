@@ -6,6 +6,9 @@ import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
 import CustomerFilters from "./CustomerFilters";
+import { browserbaseConfigured } from "@/lib/browserbase";
+import { twilioConfigured } from "@/lib/twilio";
+import { formatDisplay } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -22,6 +25,19 @@ function datePST(d: Date) {
 
 const PAGE_SIZE = 25;
 
+const ACT_LABELS: Record<string, string> = {
+  not_started: "not started",
+  in_progress: "in progress",
+  activated: "activated",
+  failed: "failed",
+};
+const ACT_COLORS: Record<string, "green" | "amber" | "red" | "gray" | "blue"> = {
+  not_started: "gray",
+  in_progress: "amber",
+  activated: "green",
+  failed: "red",
+};
+
 async function getStats() {
   const [
     totalCustomers,
@@ -29,7 +45,8 @@ async function getStats() {
     scheduledPayments,
     eventCounts,
     revenueResult,
-    credentialsCount,
+    activationGroups,
+    missingPhoneCount,
   ] = await Promise.all([
     prisma.customer.count(),
     prisma.payment.count({ where: { status: "paid" } }),
@@ -46,11 +63,16 @@ async function getStats() {
       where: { status: "paid" },
       _sum: { amount: true },
     }),
-    prisma.customer.count({ where: { status: "credentials_received" } }),
+    prisma.customer.groupBy({ by: ["activationStatus"], _count: { _all: true } }),
+    // Customers who gave us credentials but have no phone — can't relay the OTP.
+    prisma.customer.count({ where: { status: "credentials_received", phone: "" } }),
   ]);
 
   const eventMap = Object.fromEntries(
     eventCounts.map((e) => [e.event, e._count.event])
+  );
+  const activationMap = Object.fromEntries(
+    activationGroups.map((g) => [g.activationStatus, g._count._all])
   );
 
   return {
@@ -59,18 +81,34 @@ async function getStats() {
     scheduledPayments,
     eventMap,
     totalRevenueCents: revenueResult._sum.amount ?? 0,
-    credentialsCount,
+    activationMap,
+    missingPhoneCount,
   };
+}
+
+// The operator work queue: customers who handed over telco credentials but aren't
+// activated yet (never started, or a previous attempt failed).
+async function getActivationQueue() {
+  return prisma.customer.findMany({
+    where: {
+      status: "credentials_received",
+      activationStatus: { in: ["not_started", "failed"] },
+    },
+    include: { services: true, payment: true },
+    orderBy: { updatedAt: "asc" }, // oldest waiting first
+    take: 50,
+  });
 }
 
 async function getCustomers(opts: {
   page: number;
   search?: string;
   status?: string;
+  act?: string;
   from?: string;
   to?: string;
 }) {
-  const { page, search, status, from, to } = opts;
+  const { page, search, status, act, from, to } = opts;
   const where: Record<string, unknown> = {};
 
   if (search) {
@@ -81,6 +119,9 @@ async function getCustomers(opts: {
   }
   if (status) {
     where.payment = { status };
+  }
+  if (act) {
+    where.activationStatus = act;
   }
   if (from || to) {
     where.createdAt = {
@@ -130,7 +171,7 @@ function Badge({
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; status?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; status?: string; act?: string; from?: string; to?: string }>;
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
@@ -142,9 +183,10 @@ export default async function AdminPage({
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1"));
 
-  const [stats, customerData] = await Promise.all([
+  const [stats, customerData, activationQueue] = await Promise.all([
     getStats(),
-    getCustomers({ page, search: sp.search, status: sp.status, from: sp.from, to: sp.to }),
+    getCustomers({ page, search: sp.search, status: sp.status, act: sp.act, from: sp.from, to: sp.to }),
+    getActivationQueue(),
   ]);
 
   const { customers, total: customerTotal, pages: totalPages } = customerData;
@@ -154,8 +196,15 @@ export default async function AdminPage({
     scheduledPayments,
     eventMap,
     totalRevenueCents,
-    credentialsCount,
+    activationMap,
+    missingPhoneCount,
   } = stats;
+
+  const actNotStarted = activationMap["not_started"] ?? 0;
+  const actInProgress = activationMap["in_progress"] ?? 0;
+  const actActivated = activationMap["activated"] ?? 0;
+  const actFailed = activationMap["failed"] ?? 0;
+  const integrations = { browserbase: browserbaseConfigured(), twilio: twilioConfigured() };
 
   const pageViews = eventMap["page_view"] ?? 0;
   const formStarts = eventMap["form_start"] ?? 0;
@@ -183,9 +232,19 @@ export default async function AdminPage({
           />
           <span className="text-sm font-semibold text-gray-400">/ Admin</span>
         </div>
-        <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 underline">
-          View site →
-        </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`inline-flex items-center gap-1 font-semibold ${integrations.browserbase ? "text-green-600" : "text-gray-400"}`} title={integrations.browserbase ? "Browserbase connected" : "Browserbase not configured"}>
+              <span className={`w-1.5 h-1.5 rounded-full ${integrations.browserbase ? "bg-green-500" : "bg-gray-300"}`} /> Browser
+            </span>
+            <span className={`inline-flex items-center gap-1 font-semibold ${integrations.twilio ? "text-green-600" : "text-gray-400"}`} title={integrations.twilio ? "Twilio connected" : "Twilio not configured"}>
+              <span className={`w-1.5 h-1.5 rounded-full ${integrations.twilio ? "bg-green-500" : "bg-gray-300"}`} /> SMS
+            </span>
+          </div>
+          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 underline">
+            View site →
+          </Link>
+        </div>
       </div>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
@@ -227,6 +286,93 @@ export default async function AdminPage({
             <div className="text-xs text-gray-400 mt-1">{conversionRate}% conversion</div>
           </div>
         </div>
+
+        {/* Activation pipeline */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>
+              Activation pipeline
+            </h2>
+            {missingPhoneCount > 0 && (
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg">
+                ⚠ {missingPhoneCount} gave creds but no phone
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Awaiting activation", value: actNotStarted, color: "#6B7280", act: "not_started" },
+              { label: "In progress", value: actInProgress, color: "#92400E", act: "in_progress" },
+              { label: "Activated", value: actActivated, color: "#065F46", act: "activated" },
+              { label: "Failed", value: actFailed, color: "#991B1B", act: "failed" },
+            ].map((card) => (
+              <Link
+                key={card.label}
+                href={`?act=${card.act}`}
+                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-violet-300 transition-colors block"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: card.color }}>{card.label}</div>
+                <div className="text-3xl font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>{card.value}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Activation queue — operator worklist */}
+        {activationQueue.length > 0 && (
+          <div className="bg-white rounded-xl border-2 overflow-hidden" style={{ borderColor: "#7F56D9" }}>
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>
+                ⚡ Activation queue
+                <span className="ml-2 text-xs font-normal text-gray-400">({activationQueue.length}) · gave us credentials, not activated yet — oldest first</span>
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    <th className="text-left px-6 py-3">Customer</th>
+                    <th className="text-left px-6 py-3">Provider(s)</th>
+                    <th className="text-left px-6 py-3">Phone</th>
+                    <th className="text-left px-6 py-3">Payment</th>
+                    <th className="text-left px-6 py-3">Activation</th>
+                    <th className="px-6 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activationQueue.map((c) => {
+                    const phoneOk = !!formatDisplay(c.phone);
+                    return (
+                      <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="px-6 py-3">
+                          <a href={`/slash/admin/customers/${c.id}`} className="block group">
+                            <span className="font-medium text-gray-900 group-hover:text-violet-600 block">{c.name}</span>
+                            <span className="text-xs text-gray-400">{c.email}</span>
+                          </a>
+                        </td>
+                        <td className="px-6 py-3 text-xs text-gray-500">{c.services.map((s) => s.provider).join(", ") || "—"}</td>
+                        <td className="px-6 py-3 text-xs">
+                          {phoneOk
+                            ? <span className="text-gray-700">{formatDisplay(c.phone)}</span>
+                            : <span className="text-amber-600 font-semibold">⚠ missing</span>}
+                        </td>
+                        <td className="px-6 py-3">
+                          <Badge label={c.payment?.status ?? "none"} color={c.payment?.status === "paid" ? "green" : c.payment?.status === "scheduled" ? "amber" : c.payment?.status === "failed" ? "red" : "gray"} />
+                        </td>
+                        <td className="px-6 py-3">
+                          <Badge label={c.activationStatus === "failed" ? "failed" : "not started"} color={c.activationStatus === "failed" ? "red" : "gray"} />
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                          <a href={`/slash/admin/customers/${c.id}`} className="text-xs font-bold text-violet-600 hover:underline whitespace-nowrap">Activate →</a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Scheduled payments — Stripe-verified card status */}
         {scheduledTotal > 0 && (
@@ -379,7 +525,7 @@ export default async function AdminPage({
               <span className="ml-2 text-xs font-normal text-gray-400">({customerTotal})</span>
             </h2>
           </div>
-          <CustomerFilters search={sp.search} status={sp.status} from={sp.from} to={sp.to} />
+          <CustomerFilters search={sp.search} status={sp.status} act={sp.act} from={sp.from} to={sp.to} />
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -390,6 +536,7 @@ export default async function AdminPage({
                   <th className="text-left px-6 py-3">Charge date</th>
                   <th className="text-left px-6 py-3">Card</th>
                   <th className="text-left px-6 py-3">Creds</th>
+                  <th className="text-left px-6 py-3">Activation</th>
                   <th className="text-left px-6 py-3">Joined</th>
                 </tr>
               </thead>
@@ -438,6 +585,12 @@ export default async function AdminPage({
                           color={c.status === "credentials_received" ? "green" : "amber"}
                         />
                       </td>
+                      <td className="px-6 py-3">
+                        <Badge
+                          label={ACT_LABELS[c.activationStatus] ?? c.activationStatus}
+                          color={ACT_COLORS[c.activationStatus] ?? "gray"}
+                        />
+                      </td>
                       <td className="px-6 py-3 text-gray-400 text-xs">
                         {new Date(c.createdAt).toLocaleDateString("en-CA")}
                       </td>
@@ -446,7 +599,7 @@ export default async function AdminPage({
                 })}
                 {customers.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400 text-sm">
+                    <td colSpan={8} className="px-6 py-8 text-center text-gray-400 text-sm">
                       No customers match your filters.
                     </td>
                   </tr>

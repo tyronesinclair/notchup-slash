@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { browserbaseConfigured } from "@/lib/browserbase";
 import { twilioConfigured } from "@/lib/twilio";
@@ -6,7 +6,7 @@ import { twilioConfigured } from "@/lib/twilio";
 // Read-only health check: reports which integrations the running server can see,
 // so we can confirm env vars are live without sending an SMS or starting a browser.
 // Returns booleans only — never secret values.
-export async function GET(req: NextRequest) {
+export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
   if (!token || token !== process.env.ADMIN_SECRET) {

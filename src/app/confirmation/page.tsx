@@ -18,7 +18,6 @@ function ConfirmationContent() {
 
   const [phase, setPhase] = useState<"success" | "credentials" | "done">("success");
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const [services, setServices] = useState<ServiceEntry[]>([]);
   const [creds, setCreds] = useState<CredEntry[]>([]);
   const [phone, setPhone] = useState("");
   const [savingCreds, setSavingCreds] = useState(false);
@@ -36,7 +35,6 @@ function ConfirmationContent() {
     try {
       const formData = JSON.parse(raw);
       setSubmitted(true);
-      setServices(formData.services ?? []);
 
       fetch(`${base}/api/submit`, {
         method: "POST",

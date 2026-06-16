@@ -97,11 +97,6 @@ export function extractOtp(body: string): OtpExtraction {
   return { code: groups[0], candidates: groups, ambiguous: true };
 }
 
-/** Back-compat helper: best-guess code only. */
-export function parseOtp(body: string): string | null {
-  return extractOtp(body).code;
-}
-
 const KEYWORDS = new Set([
   "stop", "stopall", "unsubscribe", "cancel", "end", "quit",
   "start", "yes", "unstop", "help", "info",
