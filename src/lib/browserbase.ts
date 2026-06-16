@@ -8,6 +8,18 @@ export function browserbaseConfigured(): boolean {
   return !!(API_KEY && PROJECT_ID);
 }
 
+// Delete a customer's persistent browser context (clears stale cookies/auth state
+// that can break a telco re-login, e.g. Rogers RC01). Next session starts fresh.
+export async function deleteContext(contextId: string): Promise<void> {
+  if (!browserbaseConfigured() || !contextId) return;
+  const bb = new Browserbase({ apiKey: API_KEY! });
+  try {
+    await bb.contexts.delete(contextId);
+  } catch (err) {
+    console.error("[browserbase] context delete failed:", err);
+  }
+}
+
 export type ActivationSession = {
   mock: boolean;
   liveViewUrl: string;

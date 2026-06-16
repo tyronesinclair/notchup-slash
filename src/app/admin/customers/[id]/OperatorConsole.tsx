@@ -95,6 +95,20 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
     }).catch(() => {});
   };
 
+  const [resetting, setResetting] = useState(false);
+  const resetBrowser = async () => {
+    if (!confirm("Reset this customer's browser? Clears stored cookies/login state and starts fresh. Use this if you're stuck on an error like Rogers RC01.")) return;
+    setResetting(true);
+    try {
+      await fetch("/slash/api/admin/reset-browser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId }),
+      });
+      setLiveUrl(null); // force a fresh Start
+    } catch { /* ignore */ } finally { setResetting(false); }
+  };
+
   // ── Notes ──
   const [notesVal, setNotesVal] = useState(notes);
   const [notesDirty, setNotesDirty] = useState(false);
@@ -222,7 +236,10 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
         ) : (
           <div className="space-y-2">
             <LiveView url={liveUrl} mock={mockBrowser} height={560} />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <button onClick={resetBrowser} disabled={resetting} className="text-xs text-gray-400 hover:text-red-600 disabled:opacity-50">
+                {resetting ? "Resetting…" : "Reset browser (clears cookies)"}
+              </button>
               <button onClick={startActivation} disabled={starting} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50">
                 {starting ? "Reconnecting…" : "Reconnect"}
               </button>
