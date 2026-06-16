@@ -87,12 +87,17 @@ async function getStats() {
 }
 
 // The operator work queue: customers who handed over telco credentials but aren't
-// activated yet (never started, or a previous attempt failed).
+// activated yet — never started, a previous attempt failed, or an in-progress
+// activation that's been abandoned (stuck >6h) and needs picking back up.
 async function getActivationQueue() {
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
   return prisma.customer.findMany({
     where: {
       status: "credentials_received",
-      activationStatus: { in: ["not_started", "failed"] },
+      OR: [
+        { activationStatus: { in: ["not_started", "failed"] } },
+        { activationStatus: "in_progress", updatedAt: { lt: sixHoursAgo } },
+      ],
     },
     include: { services: true, payment: true },
     orderBy: { updatedAt: "asc" }, // oldest waiting first
@@ -360,7 +365,10 @@ export default async function AdminPage({
                           <Badge label={c.payment?.status ?? "none"} color={c.payment?.status === "paid" ? "green" : c.payment?.status === "scheduled" ? "amber" : c.payment?.status === "failed" ? "red" : "gray"} />
                         </td>
                         <td className="px-6 py-3">
-                          <Badge label={c.activationStatus === "failed" ? "failed" : "not started"} color={c.activationStatus === "failed" ? "red" : "gray"} />
+                          <Badge
+                            label={c.activationStatus === "in_progress" ? "stuck" : (ACT_LABELS[c.activationStatus] ?? c.activationStatus)}
+                            color={c.activationStatus === "in_progress" ? "amber" : (ACT_COLORS[c.activationStatus] ?? "gray")}
+                          />
                         </td>
                         <td className="px-6 py-3 text-right">
                           <a href={`/slash/admin/customers/${c.id}`} className="text-xs font-bold text-violet-600 hover:underline whitespace-nowrap">Activate →</a>

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle, ExternalLink } from "lucide-react";
+import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle, ExternalLink, StickyNote } from "lucide-react";
 import { formatDisplay } from "@/lib/phone";
 
 type Props = {
@@ -10,7 +10,15 @@ type Props = {
   provider: string;
   loginUrl: string | null;
   loginNotes: string | null;
+  notes: string;
 };
+
+const ACTIVATION_STATES: { key: string; label: string }[] = [
+  { key: "not_started", label: "Not started" },
+  { key: "in_progress", label: "In progress" },
+  { key: "activated", label: "Activated" },
+  { key: "failed", label: "Failed" },
+];
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
   not_started: { bg: "#F3F4F6", color: "#6B7280", label: "Not started" },
@@ -19,7 +27,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   failed:      { bg: "#FEF2F2", color: "#991B1B", label: "Failed" },
 };
 
-export default function OperatorConsole({ customerId, phone, activationStatus, provider, loginUrl, loginNotes }: Props) {
+export default function OperatorConsole({ customerId, phone, activationStatus, provider, loginUrl, loginNotes, notes }: Props) {
   // ── shared copy helper ──
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copy = (text: string, id: string) => {
@@ -105,6 +113,28 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const baselineRef = useRef<string | null>(null);
   const pollCountRef = useRef(0);
+
+  // ── Notes ──
+  const [notesVal, setNotesVal] = useState(notes);
+  const [notesDirty, setNotesDirty] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  const saveNotes = async () => {
+    setSavingNotes(true);
+    setNotesSaved(false);
+    try {
+      await fetch("/slash/api/admin/update-notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, notes: notesVal }),
+      });
+      setNotesDirty(false);
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2000);
+    } catch { /* leave dirty so they can retry */ }
+    finally { setSavingNotes(false); }
+  };
 
   const requestCode = async () => {
     setRequesting(true);
@@ -280,17 +310,32 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
                 {starting ? "Reconnecting…" : "Reconnect"}
               </button>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => setActivation("activated")} className="flex-1 py-2 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-200 hover:bg-green-100">
-                ✓ Mark activated
-              </button>
-              <button onClick={() => setActivation("failed")} className="flex-1 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100">
-                Mark failed
-              </button>
-            </div>
           </div>
         )}
         {startErr && <p className="text-xs text-red-500 mt-2">{startErr}</p>}
+
+        {/* Activation status control (always available — reset a stuck one without a browser) */}
+        <div className="mt-4">
+          <div className="text-xs font-semibold text-gray-500 mb-2">Set activation status</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {ACTIVATION_STATES.map((s) => {
+              const active = status === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setActivation(s.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    active
+                      ? "border-violet-500 bg-violet-50 text-violet-700"
+                      : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  {active && "✓ "}{s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* OTP relay */}
@@ -373,6 +418,32 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
           </div>
         )}
         {otpErr && <p className="text-xs text-red-500 mt-2">{otpErr}</p>}
+      </div>
+
+      {/* Case notes */}
+      <div className="border-t border-gray-100 pt-5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <StickyNote size={13} /> Case notes
+          </div>
+          {notesSaved && <span className="text-xs text-green-600 font-semibold">Saved ✓</span>}
+        </div>
+        <textarea
+          value={notesVal}
+          onChange={(e) => { setNotesVal(e.target.value); setNotesDirty(true); }}
+          rows={3}
+          placeholder="e.g. Left voicemail · wrong password, emailed them · awaiting callback…"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 resize-y"
+        />
+        {notesDirty && (
+          <button
+            onClick={saveNotes}
+            disabled={savingNotes}
+            className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {savingNotes ? <><Loader2 size={12} className="animate-spin" /> Saving…</> : "Save notes"}
+          </button>
+        )}
       </div>
     </div>
   );

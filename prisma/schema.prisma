@@ -16,6 +16,7 @@ model Customer {
   status               String    @default("pending")
   browserbaseContextId String?   // persistent telco-login browser profile (trust-cookie store)
   activationStatus     String    @default("not_started") // not_started | in_progress | activated | failed
+  notes                String?   // operator case notes
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   services             Service[]

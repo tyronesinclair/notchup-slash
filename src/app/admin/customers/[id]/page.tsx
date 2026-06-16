@@ -4,10 +4,11 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
-import { ArrowLeft, Wifi, Smartphone } from "lucide-react";
+import { ArrowLeft, Wifi, Smartphone, MessageSquare } from "lucide-react";
 import OperatorConsole from "./OperatorConsole";
 import CopyValue from "./CopyValue";
 import { getProviderLogin } from "@/lib/providers";
+import { formatDisplay } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -45,6 +46,13 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   const payment = customer.payment;
 
+  // Full SMS thread for this customer (OTP relay history), newest first.
+  const smsMessages = await prisma.smsMessage.findMany({
+    where: { customerId: id },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
@@ -69,8 +77,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             {customer.name}
           </h1>
           <div className="text-sm text-gray-500 space-y-1">
-            <div>{customer.email}</div>
-            <div>{customer.phone}</div>
+            <div>
+              <a href={`mailto:${customer.email}`} className="hover:text-violet-600">{customer.email}</a>
+            </div>
+            <div>
+              {formatDisplay(customer.phone) || <span className="text-amber-600 font-semibold">No phone on file</span>}
+            </div>
             <div className="text-xs text-gray-400">
               Joined {new Date(customer.createdAt).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}
             </div>
@@ -89,6 +101,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               provider={firstProvider}
               loginUrl={login?.loginUrl ?? null}
               loginNotes={login?.notes ?? null}
+              notes={customer.notes ?? ""}
             />
           );
         })()}
@@ -203,6 +216,33 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             );
           })}
         </div>
+
+        {/* SMS history (OTP relay thread) */}
+        {smsMessages.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-4 uppercase tracking-widest" style={{ fontFamily: "var(--font-montserrat)" }}>
+              <MessageSquare size={14} /> SMS history
+            </div>
+            <div className="space-y-2">
+              {[...smsMessages].reverse().map((m) => {
+                const out = m.direction === "outbound";
+                return (
+                  <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${out ? "bg-violet-50 border border-violet-100" : "bg-gray-100"}`}>
+                      <div className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${out ? "text-violet-500" : "text-gray-400"}`}>
+                        {out ? "NotchUp" : "Customer"}{m.code ? ` · code ${m.code}` : ""}
+                      </div>
+                      <div className="text-gray-800 break-words">{m.body}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">
+                        {new Date(m.createdAt).toLocaleString("en-CA", { timeZone: "America/Vancouver", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
