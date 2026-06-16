@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/encryption";
 import { ArrowLeft, Wifi, Smartphone } from "lucide-react";
 import OperatorConsole from "./OperatorConsole";
 import CopyValue from "./CopyValue";
+import { getProviderLogin } from "@/lib/providers";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -77,12 +78,20 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </div>
 
         {/* Operator activation console */}
-        <OperatorConsole
-          customerId={customer.id}
-          phone={customer.phone}
-          activationStatus={customer.activationStatus}
-          provider={customer.services[0]?.provider ?? "your provider"}
-        />
+        {(() => {
+          const firstProvider = customer.services[0]?.provider ?? "your provider";
+          const login = getProviderLogin(firstProvider);
+          return (
+            <OperatorConsole
+              customerId={customer.id}
+              phone={customer.phone}
+              activationStatus={customer.activationStatus}
+              provider={firstProvider}
+              loginUrl={login?.loginUrl ?? null}
+              loginNotes={login?.notes ?? null}
+            />
+          );
+        })()}
 
         {/* Payment */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">

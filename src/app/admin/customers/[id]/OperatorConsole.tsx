@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
+import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle, ExternalLink } from "lucide-react";
 import { formatDisplay } from "@/lib/phone";
 
 type Props = {
@@ -8,6 +8,8 @@ type Props = {
   phone: string;
   activationStatus: string;
   provider: string;
+  loginUrl: string | null;
+  loginNotes: string | null;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
@@ -17,7 +19,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   failed:      { bg: "#FEF2F2", color: "#991B1B", label: "Failed" },
 };
 
-export default function OperatorConsole({ customerId, phone, activationStatus, provider }: Props) {
+export default function OperatorConsole({ customerId, phone, activationStatus, provider, loginUrl, loginNotes }: Props) {
   // ── shared copy helper ──
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copy = (text: string, id: string) => {
@@ -223,6 +225,30 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 mb-3">
           <Monitor size={13} /> Step 1 — Remote browser
         </div>
+
+        {/* Provider login page */}
+        <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+          <div className="text-xs font-semibold text-gray-500 mb-1">{provider} login page</div>
+          {loginUrl ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs text-gray-800 break-all">{loginUrl}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => copy(loginUrl, "url")} className="flex items-center gap-1 text-xs text-gray-500 hover:text-violet-600" title="Copy URL">
+                  {copiedId === "url" ? <CheckCircle2 size={13} className="text-green-600" /> : <Copy size={13} />}
+                </button>
+                <a href={loginUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:underline" title="Open in new tab">
+                  Open <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600">
+              <AlertTriangle size={12} /> No login URL on file for &ldquo;{provider}&rdquo; — navigate manually, or add it in src/lib/providers.ts
+            </div>
+          )}
+          {loginNotes && <div className="text-xs text-gray-400 mt-1">{loginNotes}</div>}
+        </div>
+
         {!liveUrl ? (
           <button onClick={startActivation} disabled={starting} className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ background: "#4F4EA5" }}>
             {starting ? <><Loader2 size={15} className="animate-spin" /> Opening browser…</> : <><Monitor size={15} /> Start activation</>}
