@@ -122,10 +122,25 @@ export function validateInboundSignature(
   url: string,
   params: Record<string, string>
 ): boolean {
+  // Escape hatch: lets you temporarily accept inbound while debugging a webhook URL
+  // mismatch, instead of silently 403-ing (and dropping) every customer's code.
+  if (process.env.TWILIO_SKIP_VALIDATION === "true") {
+    console.warn("[twilio] TWILIO_SKIP_VALIDATION=true — accepting inbound without signature check");
+    return true;
+  }
   if (!AUTH_TOKEN) {
     console.warn("[twilio] no auth token set — skipping inbound signature validation");
     return true;
   }
-  if (!signature) return false;
-  return twilio.validateRequest(AUTH_TOKEN, signature, url, params);
+  if (!signature) {
+    console.warn("[twilio] inbound missing X-Twilio-Signature header");
+    return false;
+  }
+  const ok = twilio.validateRequest(AUTH_TOKEN, signature, url, params);
+  if (!ok) {
+    // Most common cause: PUBLIC_BASE_URL + "/api/sms/incoming" doesn't exactly match the
+    // URL configured in the Twilio console. Log the URL we validated against to diagnose.
+    console.error(`[twilio] signature mismatch — validated against URL: ${url}`);
+  }
+  return ok;
 }

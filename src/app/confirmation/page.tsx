@@ -203,9 +203,13 @@ function ConfirmationContent() {
                 placeholder="(604) 555-0123"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
               />
-              <p className="text-xs text-gray-400 mt-1.5">
-                So we can text you the verification code when we log in to negotiate. Canadian mobile, standard rates.
-              </p>
+              {phone.trim() && !phoneOk ? (
+                <p className="text-xs text-red-500 mt-1.5">Enter a valid 10-digit Canadian mobile number.</p>
+              ) : (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  So we can text you the verification code when we log in to negotiate. Canadian mobile, standard rates.
+                </p>
+              )}
             </div>
             <div className="space-y-5">
               {creds.map((cred, idx) => (

@@ -49,14 +49,22 @@ export async function getOrCreateSession(opts: {
     contextId = ctx.id;
   }
 
+  // Proxies require a paid Browserbase plan. Only enable when BROWSERBASE_PROXY_COUNTRY
+  // is set (e.g. "CA"); otherwise the session runs without a geolocated IP so the rest of
+  // the flow still works on the free plan. The Canadian proxy is what makes the telco
+  // "trust this device" cookie persist for a Canadian-looking IP — set it in production.
+  const proxyCountry = process.env.BROWSERBASE_PROXY_COUNTRY;
+
   const session = await bb.sessions.create({
     projectId: PROJECT_ID!,
     keepAlive: true,
-    region: "us-east-1", // closest BB region to Canada; the proxy below sets the apparent country
+    region: "us-east-1", // closest BB region to Canada
     browserSettings: {
       context: { id: contextId, persist: true },
     },
-    proxies: [{ type: "browserbase", geolocation: { country: "CA" } }],
+    ...(proxyCountry
+      ? { proxies: [{ type: "browserbase" as const, geolocation: { country: proxyCountry } }] }
+      : {}),
   });
 
   const debug = await bb.sessions.debug(session.id);

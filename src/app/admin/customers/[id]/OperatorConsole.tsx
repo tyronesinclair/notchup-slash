@@ -102,7 +102,9 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
   const [candidates, setCandidates] = useState<string[]>([]);
   const [replyBody, setReplyBody] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
   const baselineRef = useRef<string | null>(null);
+  const pollCountRef = useRef(0);
 
   const requestCode = async () => {
     setRequesting(true);
@@ -124,6 +126,8 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
       if (!res.ok) { setOtpErr(data.error ?? "Failed to send"); return; }
       setOtpSent(true);
       setMockSms(!!data.mock);
+      setPollTimedOut(false);
+      pollCountRef.current = 0;
       setPolling(true);
     } catch {
       setOtpErr("Network error");
@@ -132,10 +136,17 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
     }
   };
 
-  // Poll for the customer's reply while waiting.
+  // Poll for the customer's reply while waiting. Auto-stops after ~5 min so an
+  // unanswered request doesn't poll the API forever.
   useEffect(() => {
     if (!polling) return;
     const iv = setInterval(async () => {
+      pollCountRef.current += 1;
+      if (pollCountRef.current > 100) {
+        setPolling(false);
+        setPollTimedOut(true);
+        return;
+      }
       try {
         const data = await fetch(`/slash/api/admin/latest-otp?customerId=${customerId}`).then((r) => r.json());
         const msg = data?.message;
@@ -260,7 +271,15 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
                 <AlertTriangle size={13} /> MOCK — no Browserbase key set. This is a placeholder browser.
               </div>
             )}
-            <iframe src={liveUrl} className="w-full rounded-lg border border-gray-300 bg-gray-900" style={{ height: 460 }} title="Live View" sandbox="allow-same-origin allow-scripts allow-forms" />
+            <iframe src={liveUrl} className="w-full rounded-lg border border-gray-300 bg-gray-900" style={{ height: 460 }} title="Live View" allow="clipboard-read; clipboard-write" />
+            <div className="flex items-center justify-between">
+              <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-500 hover:text-violet-600">
+                Open live view in a new tab <ExternalLink size={11} />
+              </a>
+              <button onClick={startActivation} disabled={starting} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50">
+                {starting ? "Reconnecting…" : "Reconnect"}
+              </button>
+            </div>
             <div className="flex gap-2">
               <button onClick={() => setActivation("activated")} className="flex-1 py-2 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-200 hover:bg-green-100">
                 ✓ Mark activated
@@ -318,9 +337,16 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
             )}
 
             {/* Waiting */}
-            {!code && !replyBody && (
+            {!code && !replyBody && polling && (
               <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
                 <Loader2 size={14} className="animate-spin" /> Waiting for the customer&apos;s reply…
+              </div>
+            )}
+
+            {/* Timed out waiting */}
+            {!code && !replyBody && pollTimedOut && (
+              <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
+                No reply yet. The customer may be away — try <button onClick={requestCode} className="text-violet-600 font-semibold hover:underline">resending the request</button>.
               </div>
             )}
 
