@@ -61,6 +61,15 @@ export async function getOrCreateSession(opts: {
     region: "us-east-1", // closest BB region to Canada
     browserSettings: {
       context: { id: contextId, persist: true },
+      // Present a standard desktop viewport so responsive telco sites render the normal
+      // desktop login (the default headless size can trip layout/bot heuristics).
+      viewport: { width: 1920, height: 1080 },
+      solveCaptchas: true,
+      // OS fingerprint override and Advanced Stealth are Browserbase Enterprise-only
+      // (default fingerprint is Linux). Enable via env once on a supporting plan — major
+      // telcos (Akamai) may otherwise still flag the non-desktop OS fingerprint.
+      ...(process.env.BROWSERBASE_STEALTH_OS ? { os: process.env.BROWSERBASE_STEALTH_OS as "windows" | "mac" | "linux" } : {}),
+      ...(process.env.BROWSERBASE_ADVANCED_STEALTH === "true" ? { advancedStealth: true } : {}),
     },
     proxies: [{ type: "browserbase" as const, geolocation: { country: proxyCountry } }],
   });
