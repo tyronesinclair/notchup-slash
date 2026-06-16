@@ -67,9 +67,15 @@ export async function getOrCreateSession(opts: {
   // plan. Country is overridable via env only if we ever expand beyond Canada.
   const proxyCountry = process.env.BROWSERBASE_PROXY_COUNTRY || "CA";
 
+  // How long a session stays alive (seconds). The default (~1–2 min) is far too short
+  // for an OTP relay where the operator waits on the customer to text back a code.
+  // 20 min by default; override via env. Note: longer = more browser-minutes billed.
+  const sessionTimeout = Number(process.env.BROWSERBASE_SESSION_TIMEOUT) || 1200;
+
   const session = await bb.sessions.create({
     projectId: PROJECT_ID!,
     keepAlive: true,
+    timeout: sessionTimeout,
     region: "us-east-1", // closest BB region to Canada
     browserSettings: {
       context: { id: contextId, persist: true },
