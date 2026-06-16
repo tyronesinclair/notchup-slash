@@ -22,7 +22,9 @@ export default function CustomerFilters({ search, status, act, from, to }: Props
       }
       if (value) next.set(key, value); else next.delete(key);
       next.delete("page"); // reset to page 1 on filter change
-      router.push(`/slash/admin?${next.toString()}`);
+      // NOTE: next/navigation router auto-prepends basePath ("/slash"), so pass "/admin"
+      // here — passing "/slash/admin" would produce "/slash/slash/admin" → 404.
+      router.push(`/admin?${next.toString()}`);
     },
     [router, search, status, act, from, to]
   );
