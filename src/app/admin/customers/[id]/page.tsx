@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { ArrowLeft, Wifi, Smartphone } from "lucide-react";
 import OperatorConsole from "./OperatorConsole";
+import CopyValue from "./CopyValue";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -171,18 +172,18 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       <span>Field</span>
                       <span className="col-span-2">Value</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-1 text-sm">
+                    <div className="grid grid-cols-3 gap-1 text-sm items-center">
                       <span className="text-gray-500">Username</span>
-                      <span className="col-span-2 font-mono text-gray-900 break-all">{cred.username || "—"}</span>
+                      <CopyValue value={cred.username} />
                     </div>
-                    <div className="grid grid-cols-3 gap-1 text-sm">
+                    <div className="grid grid-cols-3 gap-1 text-sm items-center">
                       <span className="text-gray-500">Password</span>
-                      <span className="col-span-2 font-mono text-gray-900 break-all">{cred.password || "—"}</span>
+                      <CopyValue value={cred.password} />
                     </div>
                     {cred.accountNumber && (
-                      <div className="grid grid-cols-3 gap-1 text-sm">
+                      <div className="grid grid-cols-3 gap-1 text-sm items-center">
                         <span className="text-gray-500">Account #</span>
-                        <span className="col-span-2 font-mono text-gray-900 break-all">{cred.accountNumber}</span>
+                        <CopyValue value={cred.accountNumber} />
                       </div>
                     )}
                   </div>

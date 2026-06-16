@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
+import { extractOtp } from "@/lib/twilio";
 
 // Returns the most recent inbound SMS (and parsed code) for a customer.
 // Polled by the operator console while waiting for the customer's reply.
@@ -23,10 +24,15 @@ export async function GET(req: NextRequest) {
 
   if (!latest) return NextResponse.json({ message: null });
 
+  // Re-derive candidates from the stored body so the operator can pick if parsing was uncertain.
+  const extraction = extractOtp(latest.body);
+
   return NextResponse.json({
     message: {
       body: latest.body,
-      code: latest.code,
+      code: latest.code ?? extraction.code,
+      candidates: extraction.candidates,
+      ambiguous: extraction.ambiguous,
       receivedAt: latest.createdAt,
     },
   });

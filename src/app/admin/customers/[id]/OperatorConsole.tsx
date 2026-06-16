@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Phone, Pencil, Check, X, Monitor, Loader2, MessageSquare, Copy, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 import { formatDisplay } from "@/lib/phone";
 
 type Props = {
@@ -18,6 +18,15 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
 };
 
 export default function OperatorConsole({ customerId, phone, activationStatus, provider }: Props) {
+  // ── shared copy helper ──
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
+    });
+  };
+
   // ── Phone ──
   const [phoneVal, setPhoneVal] = useState(phone);
   const [editingPhone, setEditingPhone] = useState(false);
@@ -87,19 +96,20 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
   const [otpSent, setOtpSent] = useState(false);
   const [mockSms, setMockSms] = useState(false);
   const [otpErr, setOtpErr] = useState<string | null>(null);
-  const [latestCode, setLatestCode] = useState<string | null>(null);
-  const [latestBody, setLatestBody] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<string[]>([]);
+  const [replyBody, setReplyBody] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
-  const [copied, setCopied] = useState(false);
   const baselineRef = useRef<string | null>(null);
 
   const requestCode = async () => {
     setRequesting(true);
     setOtpErr(null);
-    setLatestCode(null);
-    setLatestBody(null);
+    setCode(null);
+    setCandidates([]);
+    setReplyBody(null);
     try {
-      // Record what the latest inbound was BEFORE we ask, so we only surface a fresh reply.
+      // Note the latest inbound BEFORE we ask, so we only surface a fresh reply.
       const cur = await fetch(`/slash/api/admin/latest-otp?customerId=${customerId}`).then((r) => r.json());
       baselineRef.current = cur?.message?.receivedAt ?? null;
 
@@ -128,9 +138,10 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
         const data = await fetch(`/slash/api/admin/latest-otp?customerId=${customerId}`).then((r) => r.json());
         const msg = data?.message;
         if (msg && msg.receivedAt !== baselineRef.current) {
-          setLatestBody(msg.body);
+          setReplyBody(msg.body);
+          setCandidates(msg.candidates ?? []);
           if (msg.code) {
-            setLatestCode(msg.code);
+            setCode(msg.code);
             setPolling(false);
           }
         }
@@ -139,16 +150,9 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
     return () => clearInterval(iv);
   }, [polling, customerId]);
 
-  const copyCode = () => {
-    if (!latestCode) return;
-    navigator.clipboard.writeText(latestCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
-
   const st = STATUS_STYLES[status] ?? STATUS_STYLES.not_started;
   const hasPhone = !!formatDisplay(phoneVal);
+  const extraCandidates = candidates.filter((c) => c !== code);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
@@ -161,10 +165,25 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
         </span>
       </div>
 
+      {/* How it works */}
+      <details className="group rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
+        <summary className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-600 select-none">
+          <HelpCircle size={13} /> How to activate this account
+        </summary>
+        <ol className="mt-3 space-y-1.5 text-xs text-gray-600 list-decimal list-inside">
+          <li>Make sure a <strong>mobile number</strong> is on file (add it below if missing).</li>
+          <li>Click <strong>Start activation</strong> to open the customer&apos;s remote browser.</li>
+          <li>Go to the {provider} login and enter the credentials shown further down this page (use the copy buttons).</li>
+          <li>When {provider} asks for a verification code, click <strong>Request code</strong> — the customer gets a text.</li>
+          <li>Their reply appears here. Copy the code into the browser, finish login, and check <em>&ldquo;trust this device.&rdquo;</em></li>
+          <li>Click <strong>Mark activated</strong>. The session is saved for future negotiations.</li>
+        </ol>
+      </details>
+
       {/* Phone */}
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 mb-2">
-          <Phone size={13} /> Mobile (for OTP relay)
+          <Phone size={13} /> Mobile number <span className="font-normal text-gray-400">(where we text the code)</span>
         </div>
         {editingPhone ? (
           <div className="flex items-center gap-2">
@@ -175,10 +194,10 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
               placeholder="(604) 555-0123"
               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
-            <button onClick={savePhone} disabled={savingPhone} className="p-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50">
+            <button onClick={savePhone} disabled={savingPhone} className="p-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50" title="Save">
               {savingPhone ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             </button>
-            <button onClick={() => { setEditingPhone(false); setPhoneDraft(phoneVal); setPhoneErr(null); }} className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">
+            <button onClick={() => { setEditingPhone(false); setPhoneDraft(phoneVal); setPhoneErr(null); }} className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50" title="Cancel">
               <X size={14} />
             </button>
           </div>
@@ -192,7 +211,7 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
               </span>
             )}
             <button onClick={() => { setEditingPhone(true); setPhoneDraft(phoneVal); }} className="flex items-center gap-1 text-xs text-violet-600 hover:underline font-semibold">
-              <Pencil size={11} /> {hasPhone ? "Edit" : "Add"}
+              <Pencil size={11} /> {hasPhone ? "Edit" : "Add number"}
             </button>
           </div>
         )}
@@ -202,11 +221,11 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
       {/* Activation / Live View */}
       <div className="border-t border-gray-100 pt-5">
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 mb-3">
-          <Monitor size={13} /> Remote browser
+          <Monitor size={13} /> Step 1 — Remote browser
         </div>
         {!liveUrl ? (
           <button onClick={startActivation} disabled={starting} className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ background: "#4F4EA5" }}>
-            {starting ? <><Loader2 size={15} className="animate-spin" /> Starting…</> : <><Monitor size={15} /> Start activation</>}
+            {starting ? <><Loader2 size={15} className="animate-spin" /> Opening browser…</> : <><Monitor size={15} /> Start activation</>}
           </button>
         ) : (
           <div className="space-y-3">
@@ -215,10 +234,10 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
                 <AlertTriangle size={13} /> MOCK — no Browserbase key set. This is a placeholder browser.
               </div>
             )}
-            <iframe src={liveUrl} className="w-full rounded-lg border border-gray-300" style={{ height: 460 }} title="Live View" sandbox="allow-same-origin allow-scripts allow-forms" />
+            <iframe src={liveUrl} className="w-full rounded-lg border border-gray-300 bg-gray-900" style={{ height: 460 }} title="Live View" sandbox="allow-same-origin allow-scripts allow-forms" />
             <div className="flex gap-2">
               <button onClick={() => setActivation("activated")} className="flex-1 py-2 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-200 hover:bg-green-100">
-                Mark activated
+                ✓ Mark activated
               </button>
               <button onClick={() => setActivation("failed")} className="flex-1 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100">
                 Mark failed
@@ -232,10 +251,10 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
       {/* OTP relay */}
       <div className="border-t border-gray-100 pt-5">
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 mb-3">
-          <MessageSquare size={13} /> Verification code relay
+          <MessageSquare size={13} /> Step 2 — Get the verification code
         </div>
         <button onClick={requestCode} disabled={requesting || !hasPhone} className="w-full py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 border border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100 disabled:opacity-50">
-          {requesting ? <><Loader2 size={14} className="animate-spin" /> Texting…</> : <><MessageSquare size={14} /> Request code from {provider}</>}
+          {requesting ? <><Loader2 size={14} className="animate-spin" /> Texting customer…</> : <><MessageSquare size={14} /> Request code from customer</>}
         </button>
         {!hasPhone && <p className="text-xs text-amber-600 mt-2">Add a phone number above before requesting a code.</p>}
 
@@ -243,26 +262,61 @@ export default function OperatorConsole({ customerId, phone, activationStatus, p
           <div className="mt-3 space-y-2">
             {mockSms && (
               <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                <AlertTriangle size={13} /> MOCK — no Twilio key set. No real text sent.
+                <AlertTriangle size={13} /> MOCK — no Twilio key set. No real text was sent.
               </div>
             )}
-            {!latestCode ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
-                <Loader2 size={14} className="animate-spin" /> Waiting for the customer&apos;s reply…
-              </div>
-            ) : (
+
+            {/* Detected code */}
+            {code && (
               <div className="flex items-center justify-between bg-green-50 border-2 border-green-300 rounded-lg px-4 py-3">
                 <div>
                   <div className="text-xs text-green-700 font-semibold">Code received</div>
-                  <div className="text-2xl font-extrabold tracking-widest text-green-900 font-mono">{latestCode}</div>
+                  <div className="text-2xl font-extrabold tracking-widest text-green-900 font-mono">{code}</div>
                 </div>
-                <button onClick={copyCode} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-green-300 text-green-700 text-xs font-semibold hover:bg-green-100">
-                  {copied ? <><CheckCircle2 size={13} /> Copied</> : <><Copy size={13} /> Copy</>}
+                <button onClick={() => copy(code, "code")} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-green-300 text-green-700 text-xs font-semibold hover:bg-green-100">
+                  {copiedId === "code" ? <><CheckCircle2 size={13} /> Copied</> : <><Copy size={13} /> Copy</>}
                 </button>
               </div>
             )}
-            {latestBody && !latestCode && (
-              <p className="text-xs text-gray-400">Last reply: &ldquo;{latestBody}&rdquo; (no code detected — ask them to resend just the digits)</p>
+
+            {/* Alternate candidates (ambiguous parse) */}
+            {extraCandidates.length > 0 && (
+              <div className="text-xs text-gray-500">
+                <span className="mr-1">{code ? "Other numbers we saw:" : "Possible codes — pick one:"}</span>
+                {extraCandidates.map((c) => (
+                  <button key={c} onClick={() => copy(c, `cand-${c}`)} className="inline-flex items-center gap-1 mr-1.5 mb-1 px-2 py-1 rounded-md border border-gray-300 bg-white font-mono text-gray-800 hover:bg-gray-50">
+                    {c} {copiedId === `cand-${c}` ? <CheckCircle2 size={11} className="text-green-600" /> : <Copy size={11} className="text-gray-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Waiting */}
+            {!code && !replyBody && (
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
+                <Loader2 size={14} className="animate-spin" /> Waiting for the customer&apos;s reply…
+              </div>
+            )}
+
+            {/* Reply with no auto-detected code */}
+            {!code && replyBody && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-3">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 mb-1.5">
+                  <AlertTriangle size={12} /> Customer replied — couldn&apos;t auto-detect a code
+                </div>
+                <div className="flex items-center justify-between gap-2 bg-white border border-amber-200 rounded-md px-3 py-2">
+                  <span className="text-sm text-gray-800 break-words">{replyBody}</span>
+                  <button onClick={() => copy(replyBody, "raw")} className="shrink-0 flex items-center gap-1 text-xs text-amber-700 font-semibold hover:underline">
+                    {copiedId === "raw" ? <CheckCircle2 size={12} /> : <Copy size={12} />} Copy
+                  </button>
+                </div>
+                <p className="text-xs text-amber-600 mt-1.5">We&apos;ve asked them to resend just the digits. It&apos;ll update here automatically.</p>
+              </div>
+            )}
+
+            {/* Always-available raw reply (when a code WAS detected, for verification) */}
+            {code && replyBody && (
+              <p className="text-xs text-gray-400">Full reply: &ldquo;{replyBody}&rdquo;</p>
             )}
           </div>
         )}

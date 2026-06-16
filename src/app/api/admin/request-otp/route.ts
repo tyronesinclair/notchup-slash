@@ -31,10 +31,11 @@ export async function POST(req: NextRequest) {
   }
 
   const provider = customer.services[0]?.provider || "your provider";
+  const firstName = customer.name.split(" ")[0] || "there";
   const body =
-    `NotchUp here — we're activating your ${provider} account now. ` +
-    `${provider} just texted you a verification code. Reply with that code to continue. ` +
-    `Reply STOP to opt out.`;
+    `Hi ${firstName}, it's NotchUp 👋 We're logging in to ${provider} right now to negotiate your bill. ` +
+    `${provider} just texted you a verification code — reply here with it. ` +
+    `(You can paste their whole message, we'll find the code.) Reply STOP to opt out.`;
 
   const result = await sendSms(to, body);
 
