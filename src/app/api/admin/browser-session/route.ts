@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
-import { getOrCreateSession } from "@/lib/browserbase";
+import { getOrCreateSession, navigateSession } from "@/lib/browserbase";
 import { getProviderLogin } from "@/lib/providers";
 
 // Starts (or resumes) the persistent remote browser for a customer's telco activation.
@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getOrCreateSession({
       existingContextId: customer.browserbaseContextId,
-      startUrl: resolvedStartUrl,
     });
 
     await prisma.customer.update({
@@ -47,6 +46,14 @@ export async function POST(req: NextRequest) {
         ...(session.contextId && !customer.browserbaseContextId && { browserbaseContextId: session.contextId }),
       },
     });
+
+    // Navigate to the login page AFTER responding, so "Start" returns instantly and the
+    // browser appears immediately — the page then loads in the Live View while the
+    // operator watches (saves the ~1.5s CDP-connect + navigation from the start time).
+    if (!session.mock && session.connectUrl && resolvedStartUrl) {
+      const connectUrl = session.connectUrl;
+      after(() => navigateSession(connectUrl, resolvedStartUrl));
+    }
 
     return NextResponse.json({
       liveViewUrl: session.liveViewUrl,

@@ -25,6 +25,7 @@ export type ActivationSession = {
   liveViewUrl: string;
   sessionId: string;
   contextId: string | null;
+  connectUrl: string | null;
 };
 
 /**
@@ -42,7 +43,6 @@ export type ActivationSession = {
  */
 export async function getOrCreateSession(opts: {
   existingContextId: string | null;
-  startUrl?: string | null;
 }): Promise<ActivationSession> {
   if (!browserbaseConfigured()) {
     return {
@@ -50,6 +50,7 @@ export async function getOrCreateSession(opts: {
       liveViewUrl: "/slash/admin/mock-browser",
       sessionId: "mock",
       contextId: opts.existingContextId,
+      connectUrl: null,
     };
   }
 
@@ -83,6 +84,8 @@ export async function getOrCreateSession(opts: {
       // desktop login (the default headless size can trip layout/bot heuristics).
       viewport: { width: 1920, height: 1080 },
       solveCaptchas: true,
+      blockAds: true,         // skip ad/tracker requests — lighter telco page loads
+      recordSession: false,   // no replay recording overhead (we don't use it)
       // OS fingerprint override and Advanced Stealth are Browserbase Enterprise-only
       // (default fingerprint is Linux). Enable via env once on a supporting plan — major
       // telcos (Akamai) may otherwise still flag the non-desktop OS fingerprint.
@@ -92,27 +95,6 @@ export async function getOrCreateSession(opts: {
     proxies: [{ type: "browserbase" as const, geolocation: { country: proxyCountry } }],
   });
 
-  // Pre-navigate the remote browser to the telco login page so the operator lands
-  // ready-to-type instead of an empty tab. Best-effort: if it fails, the session is
-  // still usable and the operator can navigate manually. playwright-core is imported
-  // lazily so it doesn't load on every dashboard render.
-  if (opts.startUrl && session.connectUrl) {
-    try {
-      const { chromium } = await import("playwright-core");
-      const browser = await chromium.connectOverCDP(session.connectUrl);
-      const ctx = browser.contexts()[0] ?? (await browser.newContext());
-      const page = ctx.pages()[0] ?? (await ctx.newPage());
-      // waitUntil "commit" returns as soon as navigation starts (not full load), so the
-      // request stays fast even when the telco page is slow — the page finishes loading
-      // in the Live View while the operator watches. Critical for batch concurrency.
-      await page.goto(opts.startUrl, { waitUntil: "commit", timeout: 12000 });
-      // keepAlive: true keeps the Browserbase session running after we disconnect.
-      await browser.close();
-    } catch (err) {
-      console.error("[browserbase] pre-navigation failed:", err);
-    }
-  }
-
   const debug = await bb.sessions.debug(session.id);
 
   return {
@@ -120,5 +102,26 @@ export async function getOrCreateSession(opts: {
     liveViewUrl: debug.debuggerFullscreenUrl,
     sessionId: session.id,
     contextId,
+    connectUrl: session.connectUrl ?? null,
   };
+}
+
+/**
+ * Navigate a live session's browser to a URL. Run this AFTER returning the Live View
+ * to the operator (via Next's `after()`), so "Start" feels instant — the browser
+ * appears immediately and then loads the login page while the operator watches.
+ * Best-effort: failure just leaves a blank tab the operator can navigate manually.
+ */
+export async function navigateSession(connectUrl: string, url: string): Promise<void> {
+  try {
+    const { chromium } = await import("playwright-core");
+    const browser = await chromium.connectOverCDP(connectUrl);
+    const ctx = browser.contexts()[0] ?? (await browser.newContext());
+    const page = ctx.pages()[0] ?? (await ctx.newPage());
+    await page.goto(url, { waitUntil: "commit", timeout: 12000 });
+    // keepAlive: true keeps the Browserbase session running after we disconnect.
+    await browser.close();
+  } catch (err) {
+    console.error("[browserbase] navigation failed:", err);
+  }
 }
