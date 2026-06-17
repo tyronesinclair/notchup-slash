@@ -102,7 +102,10 @@ export async function getOrCreateSession(opts: {
       const browser = await chromium.connectOverCDP(session.connectUrl);
       const ctx = browser.contexts()[0] ?? (await browser.newContext());
       const page = ctx.pages()[0] ?? (await ctx.newPage());
-      await page.goto(opts.startUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+      // waitUntil "commit" returns as soon as navigation starts (not full load), so the
+      // request stays fast even when the telco page is slow — the page finishes loading
+      // in the Live View while the operator watches. Critical for batch concurrency.
+      await page.goto(opts.startUrl, { waitUntil: "commit", timeout: 12000 });
       // keepAlive: true keeps the Browserbase session running after we disconnect.
       await browser.close();
     } catch (err) {

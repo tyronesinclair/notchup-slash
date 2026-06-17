@@ -66,8 +66,8 @@ export default async function BatchPage({
               : "No accounts selected. Go back and tick customers in the activation queue, then click Start batch."}
           </p>
           {customers.length > 0 && (
-            <p className="text-xs text-amber-600 mt-1">
-              Tip: Browserbase runs up to 3 live browsers at once on the current plan — start them in waves if you selected more.
+            <p className="text-xs text-gray-400 mt-1">
+              Tip: start each browser, then work them as replies land — each runs independently.
             </p>
           )}
         </div>

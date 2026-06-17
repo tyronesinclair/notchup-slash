@@ -6,6 +6,7 @@ import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
 import CustomerFilters from "./CustomerFilters";
+import AlertInbox from "./AlertInbox";
 import { browserbaseConfigured } from "@/lib/browserbase";
 import { twilioConfigured } from "@/lib/twilio";
 import { formatDisplay } from "@/lib/phone";
@@ -291,6 +292,9 @@ export default async function AdminPage({
             <div className="text-xs text-gray-400 mt-1">{conversionRate}% conversion</div>
           </div>
         </div>
+
+        {/* Live replies inbox */}
+        <AlertInbox />
 
         {/* Activation pipeline */}
         <div>
