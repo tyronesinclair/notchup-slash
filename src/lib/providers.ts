@@ -9,10 +9,14 @@ export type ProviderLogin = {
   name: string;       // canonical display name
   loginUrl: string;   // page the operator should open to sign in
   notes?: string;     // anything the operator should know (redirects, app-only, etc.)
+  // Whether the automated bot can verify credentials for this provider. Rogers uses
+  // Transmit Security + aggressive Akamai bot detection that blocks automation, so it
+  // falls back to the manual operator flow. Default true for the rest.
+  autoVerify?: boolean;
 };
 
 const PROVIDERS: Record<string, ProviderLogin> = {
-  rogers:   { name: "Rogers",        loginUrl: "https://www.rogers.com/signin" },
+  rogers:   { name: "Rogers",        loginUrl: "https://www.rogers.com/signin", autoVerify: false },
   bell:     { name: "Bell",          loginUrl: "https://www.bell.ca/Login", notes: "MyBell sign-in" },
   telus:    { name: "Telus",         loginUrl: "https://www.telus.com/my-account" },
   videotron:{ name: "Videotron",     loginUrl: "https://www.videotron.com/en/customer-centre", notes: "Mon dossier / My account" },
@@ -41,4 +45,13 @@ export function getProviderLogin(provider: string | null | undefined): ProviderL
   // Loose contains-match as a last resort (e.g. "Rogers Internet").
   const hit = Object.keys(PROVIDERS).find((k) => key.includes(k));
   return hit ? PROVIDERS[hit] : null;
+}
+
+/**
+ * Whether we attempt automated credential verification for this provider.
+ * Unknown/"Other" providers and Rogers fall back to the manual operator flow.
+ */
+export function canAutoVerify(provider: string | null | undefined): boolean {
+  const p = getProviderLogin(provider);
+  return !!p && p.autoVerify !== false;
 }
