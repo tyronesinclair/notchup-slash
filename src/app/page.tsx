@@ -16,7 +16,8 @@ import CTA from "@/components/landing/CTA";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Slash — The AI Agent That Lowers Your Rogers, Bell & Telus Bills | $15/mo, Keep 100%",
+  // `absolute` skips the layout's " | NotchUp Slash" template so the tag stays ~60 chars.
+  title: { absolute: "Lower Your Rogers, Bell & Telus Bills — Slash AI Agent · $15/mo" },
   description:
     "Slash is an AI agent that logs into your Canadian provider account, finds overcharges, and negotiates your internet, mobile and TV bills down. $15/month, you keep 100% of the savings. 30-day money-back guarantee.",
   keywords: [

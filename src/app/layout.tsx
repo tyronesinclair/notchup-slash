@@ -44,11 +44,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://notchup.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "NotchUp Slash — Lower Your Rogers, Bell & Telus Bills by $487/yr",
+    default: "NotchUp Slash — AI Bill Negotiation for Canadians",
     template: "%s | NotchUp Slash",
   },
   description:
-    "AI-powered bill negotiation for Canadians. We negotiate with Rogers, Bell & Telus to cut your phone and internet bills. $35 flat — free if we can't save you $100+/year.",
+    "Slash is an AI agent that logs into your Rogers, Bell or Telus account and negotiates your internet, mobile and TV bills down. $15/month, you keep 100% of the savings. 30-day money-back guarantee.",
   keywords: [
     "lower Rogers bill",
     "lower Bell bill",
@@ -68,8 +68,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_CA",
     url: `${SITE_URL}/slash`,
-    title: "NotchUp Slash — Lower Your Rogers, Bell & Telus Bills",
-    description: "AI negotiates your Rogers, Bell & Telus bills. Average savings $487/yr. $35 flat fee — money back if we can't save you $100+.",
+    title: "Slash — the AI agent that lowers your bills",
+    description: "Logs into your Rogers, Bell or Telus account, finds the overcharges, negotiates them down. $15/mo, you keep 100% of the savings. 30-day money back. Canada only.",
     siteName: "NotchUp Slash",
     images: [
       {
@@ -82,8 +82,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NotchUp Slash — Lower Your Rogers, Bell & Telus Bills",
-    description: "AI negotiates your Rogers, Bell & Telus bills. Average savings $487/yr. $35 flat fee — free if we can't save you $100+.",
+    title: "Slash — the AI agent that lowers your bills",
+    description: "Logs into your Rogers, Bell or Telus account, finds the overcharges, negotiates them down. $15/mo, you keep 100% of the savings. 30-day money back. Canada only.",
     images: ["https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/6668a60722e01a019563454e_Open%20graph%20image.jpg"],
     site: "@NotchUp",
   },
