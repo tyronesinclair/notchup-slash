@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+const SUB_YEAR = 180; // $15/mo
+
 function Slider({ label, value, setValue, min, max, prefix = "", suffix = "" }: {
   label: string; value: number; setValue: (v: number) => void;
   min: number; max: number; prefix?: string; suffix?: string;
@@ -16,10 +18,7 @@ function Slider({ label, value, setValue, min, max, prefix = "", suffix = "" }: 
         </span>
       </div>
       <div className="slider-track" style={{ "--pct": `${pct}%` } as React.CSSProperties}>
-        <input
-          type="range" min={min} max={max} value={value}
-          onChange={(e) => setValue(Number(e.target.value))}
-        />
+        <input type="range" min={min} max={max} value={value} onChange={(e) => setValue(Number(e.target.value))} />
       </div>
     </div>
   );
@@ -28,58 +27,54 @@ function Slider({ label, value, setValue, min, max, prefix = "", suffix = "" }: 
 export default function Calculator() {
   const [internet, setInternet] = useState(105);
   const [mobile, setMobile] = useState(85);
-  const [households, setHouseholds] = useState(1);
+  const [tv, setTv] = useState(40);
 
-  const monthlyBill = (internet + mobile) * households;
+  const monthlyBill = internet + mobile + tv;
   const monthlySavings = Math.round(monthlyBill * 0.32);
   const annualSavings = monthlySavings * 12;
-  const slashCut = Math.round(annualSavings * 0.40);
-  const youKeep = annualSavings - slashCut - 35;
+  const youKeep = Math.max(annualSavings - SUB_YEAR, 0);
+  const multiple = annualSavings > 0 ? (annualSavings / SUB_YEAR).toFixed(1) : "0";
 
   return (
     <section className="calc">
       <div className="container calc-grid">
         <div>
           <div className="kicker">Find your number</div>
-          <h2 className="section-h">How much are you leaving on the table?</h2>
+          <h2 className="section-h">How much is the loyalty tax costing you?</h2>
           <p className="section-sub">
-            Drag the sliders. We&apos;ll show you what we typically save Canadians on similar plans — based on 14,000+ negotiations.
+            Drag the sliders. This is what we typically win on similar Canadian plans — and since we keep 0%, it&apos;s all yours minus the $15/mo.
           </p>
           <div className="calc-controls">
             <Slider label="Internet bill" value={internet} setValue={setInternet} min={40} max={250} prefix="$" suffix="/mo" />
-            <Slider label="Mobile (combined)" value={mobile} setValue={setMobile} min={30} max={400} prefix="$" suffix="/mo" />
-            <Slider label="People in household" value={households} setValue={setHouseholds} min={1} max={5} suffix=" people" />
+            <Slider label="Mobile (all lines)" value={mobile} setValue={setMobile} min={30} max={400} prefix="$" suffix="/mo" />
+            <Slider label="TV / cable" value={tv} setValue={setTv} min={0} max={200} prefix="$" suffix="/mo" />
           </div>
         </div>
 
         <div className="calc-result">
           <div className="calc-result-inner">
-            <div className="kicker-light">Estimated annual savings</div>
+            <div className="kicker-light">Estimated savings, year one</div>
             <div className="calc-big">${annualSavings.toLocaleString()}</div>
-            <div className="calc-sub">≈ ${monthlySavings}/month off your bills</div>
+            <div className="calc-sub">≈ ${monthlySavings}/month off your bills · {multiple}× what Slash costs</div>
 
             <div className="calc-bar-wrap">
               <div className="calc-bar">
-                <div className="calc-bar-keep" style={{ flex: Math.max(youKeep, 0) }}>
+                <div className="calc-bar-keep" style={{ flex: Math.max(youKeep, 1) }}>
                   <span>You keep</span>
-                  <strong>${Math.max(youKeep, 0).toLocaleString()}</strong>
+                  <strong>${youKeep.toLocaleString()}</strong>
                 </div>
-                <div className="calc-bar-cut" style={{ flex: slashCut }}>
-                  <span>NotchUp 40%</span>
-                  <strong>${slashCut.toLocaleString()}</strong>
-                </div>
-                <div className="calc-bar-fee" style={{ flex: 35 }}>
-                  <span>Fee</span>
-                  <strong>$35</strong>
+                <div className="calc-bar-fee" style={{ flex: SUB_YEAR }}>
+                  <span>Slash · $15/mo</span>
+                  <strong>${SUB_YEAR}</strong>
                 </div>
               </div>
             </div>
 
             <Link href="/sign-up" className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center" }}>
-              Lock in ${Math.max(youKeep, 0).toLocaleString()} <span aria-hidden>→</span>
+              Keep ${youKeep.toLocaleString()} this year <span aria-hidden>→</span>
             </Link>
             <div className="calc-fine">
-              Estimate based on 32% avg. reduction across approved offers. Not a guarantee.
+              Estimate based on a 32% avg. reduction across approved offers. Not a guarantee — but if we don&apos;t deliver, there&apos;s a 30-day refund.
             </div>
           </div>
         </div>

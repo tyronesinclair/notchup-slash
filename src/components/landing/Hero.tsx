@@ -1,6 +1,8 @@
 import Link from "next/link";
 import BillReceipt from "./BillReceipt";
 
+const serif = { fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic" as const, fontWeight: 400 };
+
 function PromiseChip({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
     <div className="promise-chip">
@@ -18,44 +20,40 @@ export default function Hero() {
     <section className="hero">
       <div className="container hero-grid">
         <div>
-          <div className="pill">
-            🇨🇦 A NotchUp product · Canada only
-          </div>
+          <div className="pill">🇨🇦 An AI agent for Canadian bills · by NotchUp</div>
 
           <h1 className="hero-h1">
-            Lower your{" "}
+            The AI agent that{" "}
             <span className="hero-strike-wrap">
-              phone &amp; internet bills
+              lowers your bills
               <svg className="hero-strike" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M2,18 Q100,4 200,12 T398,8" stroke="var(--accent)" strokeWidth="10" fill="none" strokeLinecap="round" />
               </svg>
-            </span>{" "}by{" "}
-            <em style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--accent-ink)" }}>
-              $487/year
-            </em>{" "}on average.
+            </span>{" "}
+            <em style={{ ...serif, color: "var(--accent-ink)" }}>so you don&apos;t have to.</em>
           </h1>
 
           <p className="hero-sub">
-            NotchUp Slash is the AI that quietly negotiates with Rogers, Bell &amp; Telus on your behalf. No hold music. No retention scripts.
+            Slash logs into your Rogers, Bell or Telus account, finds every overcharge, and negotiates it down with the retention team. You just approve the win. No hold music. No awkward calls.
           </p>
 
           <div className="hero-promise">
             <div className="hero-promise-headline">
-              <span className="hero-promise-amount">$100+</span>
-              <span>in savings or it&apos;s <em style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400, color: "var(--accent-ink)" }}>completely free</em>.</span>
+              <span className="hero-promise-amount">100%</span>
+              <span>of the savings are <em style={{ ...serif, color: "var(--accent-ink)" }}>yours.</em> We take $0.</span>
             </div>
-            <div className="hero-promise-sub">Backed by our 6-month, money-back guarantee.</div>
+            <div className="hero-promise-sub">$15/month · 30-day money-back guarantee · cancel anytime</div>
           </div>
 
           <div className="hero-ctas">
-            <Link href="/sign-up" className="btn btn-primary btn-lg">Slash my bills — $35 <span aria-hidden>→</span></Link>
+            <Link href="/sign-up" className="btn btn-primary btn-lg">Start for $15/mo <span aria-hidden>→</span></Link>
             <a href="#how" className="btn btn-ghost btn-lg">See how it works</a>
           </div>
 
           <div className="hero-promise-row">
-            <PromiseChip icon="✓" title="$100+ guaranteed" body="or it's free, full stop." />
-            <PromiseChip icon="↺" title="$35 back" body="if you reject the offer." />
-            <PromiseChip icon="⏱" title="6-month window" body="to find your savings." />
+            <PromiseChip icon="100" title="Keep every dollar" body="0% of your savings, ever." />
+            <PromiseChip icon="↺" title="30-day money back" body="no questions asked." />
+            <PromiseChip icon="✕" title="Cancel anytime" body="two clicks, no phone call." />
           </div>
         </div>
 
@@ -67,18 +65,18 @@ export default function Hero() {
             <div style={{ fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif", fontWeight: 600, fontSize: 18, color: "var(--accent-ink)" }}>+$62 saved</div>
           </div>
 
-          <div className="hero-stamp" aria-label="Money-back guarantee">
+          <div className="hero-stamp" aria-label="You keep 100% of savings">
             <svg viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
               <defs>
                 <path id="circ" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
               </defs>
               <text className="stamp-text">
-                <textPath href="#circ" startOffset="0">$100 OR FREE · 6 MONTHS · MONEY BACK · </textPath>
+                <textPath href="#circ" startOffset="0">KEEP 100% · $15/MO · 30-DAY MONEY BACK · </textPath>
               </text>
             </svg>
             <div className="hero-stamp-core">
-              <div className="hero-stamp-big">$0</div>
-              <div className="hero-stamp-cap">if no savings</div>
+              <div className="hero-stamp-big">0%</div>
+              <div className="hero-stamp-cap">our cut</div>
             </div>
           </div>
         </div>

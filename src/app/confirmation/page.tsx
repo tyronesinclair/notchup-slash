@@ -13,11 +13,13 @@ function ConfirmationContent() {
   const pathname = usePathname();
   const scheduled = params.get("scheduled") === "true";
   const scheduledDate = params.get("date");
+  const isSub = params.get("sub") === "true";
   const redirectStatus = params.get("redirect_status");
   const failed = redirectStatus === "failed" || redirectStatus === "canceled";
 
   const [phase, setPhase] = useState<"success" | "credentials" | "done">("success");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [manageUrl, setManageUrl] = useState<string | null>(null);
   const [creds, setCreds] = useState<CredEntry[]>([]);
   const [phone, setPhone] = useState("");
   const [savingCreds, setSavingCreds] = useState(false);
@@ -43,6 +45,7 @@ function ConfirmationContent() {
       })
         .then((r) => r.json())
         .then((data) => {
+          if (data.manageUrl) setManageUrl(data.manageUrl);
           if (data.customerId) {
             setCustomerId(data.customerId);
             setCreds(
@@ -154,10 +157,11 @@ function ConfirmationContent() {
             You&apos;re all set!
           </h1>
           <p className="text-gray-500 mb-6 leading-relaxed">
-            We&apos;ve got everything we need. Our AI agents will start working on your file and email you a savings proposal within 3–5 weeks.
+            We&apos;ve got everything we need. Slash will start on your first bill and email you a savings offer to approve — every dollar of it is yours.
           </p>
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-xs text-green-800 text-left">
-            <strong>Reminder:</strong> If we can&apos;t save you $100+/year or you reject our offer, your $35 is fully refunded.
+            <strong>30-day money-back guarantee.</strong> Not for you? Full refund, no questions asked.
+            {manageUrl && (<> Manage or cancel anytime from your <a href={manageUrl} className="underline font-semibold">billing page</a>.</>)}
           </div>
           <Link href="https://notchup.app" className="inline-flex items-center gap-2 text-sm font-bold hover:opacity-80 transition-opacity" style={{ color: "#4F4EA5" }}>
             Back to NotchUp <ArrowRight size={14} />
@@ -288,22 +292,31 @@ function ConfirmationContent() {
         </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
-            {scheduled ? "You're all set!" : "Payment confirmed!"}
+            {isSub ? "You're subscribed!" : scheduled ? "You're all set!" : "Payment confirmed!"}
           </h1>
           <p className="text-gray-500 leading-relaxed">
-            {scheduled
-              ? `Your $35 activation fee is scheduled for ${formattedDate ?? "your chosen date"}. We'll start working on your file right away.`
-              : "Your $35 activation fee is confirmed. Our AI agents will start working on your file."}
+            {isSub
+              ? "Slash is $15/month and you keep 100% of every dollar we save you. One last step to get started."
+              : scheduled
+                ? `Your $35 activation fee is scheduled for ${formattedDate ?? "your chosen date"}. We'll start working on your file right away.`
+                : "Your $35 activation fee is confirmed. Our AI agents will start working on your file."}
           </p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-5 mb-6 space-y-3">
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400">What happens next</p>
-          {[
-            { icon: "✉️", text: "Confirmation email within 24 hours" },
-            { icon: "🤖", text: "AI agents begin working in 3–5 weeks" },
-            { icon: "✅", text: "We email you a savings proposal to approve or reject" },
-          ].map(({ icon, text }) => (
+          {(isSub
+            ? [
+                { icon: "🔐", text: "Add your provider login so Slash can get in (next step)" },
+                { icon: "🤖", text: "Slash audits your first bill and negotiates with retention" },
+                { icon: "✅", text: "You get a savings offer to approve — you keep 100%" },
+              ]
+            : [
+                { icon: "✉️", text: "Confirmation email within 24 hours" },
+                { icon: "🤖", text: "AI agents begin working in 3–5 weeks" },
+                { icon: "✅", text: "We email you a savings proposal to approve or reject" },
+              ]
+          ).map(({ icon, text }) => (
             <div key={text} className="flex items-center gap-3 text-sm text-gray-600">
               <span className="shrink-0 text-base">{icon}</span>
               <span>{text}</span>
@@ -312,7 +325,11 @@ function ConfirmationContent() {
         </div>
 
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-xs text-green-800">
-          <strong>Guarantee:</strong> If we can&apos;t save you $100+/year or you reject our offer, your $35 is fully refunded.
+          {isSub ? (
+            <><strong>30-day money-back guarantee, no questions asked.</strong> Cancel anytime{manageUrl ? <> from your <a href={manageUrl} className="underline font-semibold">billing page</a></> : null}.</>
+          ) : (
+            <><strong>Guarantee:</strong> If we can&apos;t save you $100+/year or you reject our offer, your $35 is fully refunded.</>
+          )}
         </div>
 
         <button

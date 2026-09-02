@@ -1,19 +1,19 @@
 const testimonials = [
   {
-    quote: "I'd been meaning to call Rogers for over a year but kept putting it off. NotchUp handled everything. My bill went from $119 to $57 — without me lifting a finger.",
+    quote: "I'd been meaning to call Rogers for over a year and kept putting it off. Slash handled the whole thing. My bill went from $119 to $57 — and I kept all of it.",
     who: "Sarah K.", where: "Toronto, ON", saving: "$62/mo", carrier: "Rogers Internet", initials: "SK",
     feature: true,
   },
   {
-    quote: "Was paying $95/mo for my cell plan. They got it to $57 with the same data. Paid $35 and got back $152 in year one after their cut. Absolutely worth it.",
+    quote: "Paying $95 for my cell plan. Slash got it to $57 with the same data. $15 a month for that is not a hard decision.",
     who: "Michael T.", where: "Calgary, AB", saving: "$38/mo", carrier: "Bell Mobility", initials: "MT",
   },
   {
-    quote: "Did both internet and phone at the same time. Took about four weeks and I didn't have to do anything after signing up. Genuinely impressed.",
-    who: "Priya N.", where: "Vancouver, BC", saving: "$44/mo", carrier: "Telus Internet + Cell", initials: "PN",
+    quote: "Added internet and my phone. It did them one after the other and I didn't touch a thing after signing up. Genuinely impressed.",
+    who: "Priya N.", where: "Vancouver, BC", saving: "$44/mo", carrier: "Telus Internet + Mobile", initials: "PN",
   },
   {
-    quote: "Skeptical at first. NotchUp got Bell to drop my bill $51/mo and credit me $80 for past overcharges. Took less than three weeks.",
+    quote: "Skeptical at first. Bell dropped my bill $51 a month and credited me $80 for past overcharges. I approved it from my couch.",
     who: "Daniel R.", where: "Montréal, QC", saving: "$51/mo", carrier: "Bell Internet", initials: "DR",
   },
 ];
@@ -25,7 +25,7 @@ export default function Testimonials() {
         <div className="section-header">
           <div className="kicker">Member stories</div>
           <h2 className="section-h">
-            Real savings. <span style={{ color: "var(--muted)" }}>Real Canadians.</span>
+            Real savings. <span style={{ color: "var(--muted)" }}>All theirs to keep.</span>
           </h2>
         </div>
 
@@ -49,9 +49,9 @@ export default function Testimonials() {
         </div>
 
         <div className="trust-row">
-          <span>⭐ 4.9/5 from early access members</span>
-          <span>🍁 Canada-only service</span>
-          <span>🔒 Bank-grade credential security</span>
+          <span>🍁 Built for Canada, by NotchUp</span>
+          <span>🔒 AES-256 encrypted logins</span>
+          <span>✓ You approve every change</span>
         </div>
       </div>
     </section>

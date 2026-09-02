@@ -49,13 +49,13 @@ export default function Footer() {
 
       <div className="container foot-fine">
         <p>
-          <strong>About NotchUp Slash</strong> — Slash is an AI-powered bill negotiation service available exclusively to NotchUp members in Canada. We charge a one-time $35 activation fee plus 40% of the savings we secure in the first 12 months. If we can&apos;t find at least $100 in annual savings within six months, the service is completely free and your $35 is refunded.
+          <strong>About NotchUp Slash</strong> — Slash is an AI bill-negotiation agent for Canadians, by NotchUp. It&apos;s a $15/month subscription that covers unlimited internet, mobile, TV and home-phone bills, negotiated one at a time. We keep 0% of your savings. Cancel anytime; a full refund is available within 30 days of signing up, no questions asked. Slash negotiates with your provider&apos;s retention team through your account and never changes your plan without your approval.
         </p>
         <p>
-          <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Videotron, Freedom Mobile, Fido Solutions, Koodo Mobile, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
+          <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Shaw, Videotron, Freedom Mobile, Fido Solutions, Koodo Mobile, Virgin Plus, Cogeco, Eastlink, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
         </p>
         <p>
-          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr average, 32% reduction, individual testimonial amounts) reflect outcomes of approved offers across NotchUp Slash members and are not a guarantee of future results. Actual savings depend on your current plan, carrier, and account history.
+          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr average, 32% reduction, calculator estimates, and member stories, which are illustrative) reflect outcomes of approved offers and are not a guarantee of future results. Actual savings depend on your current plan, carrier, and account history. Competitor fee ranges cited are typical industry success-fee percentages, not claims about any specific company.
         </p>
         <p>
           Not all members will qualify for advances; depending on eligibility, advances range from $50 – $1,500. Subject to NotchUp&apos;s approval and policies.

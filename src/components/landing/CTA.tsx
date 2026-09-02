@@ -5,26 +5,28 @@ export default function CTA() {
     <section id="cta" className="final">
       <div className="container final-inner">
         <h2 className="final-h">
-          Stop overpaying.<br />
+          Stop paying the loyalty tax.<br />
           <span style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400 }}>
-            Start keeping it.
+            Keep every dollar.
           </span>
         </h2>
 
         <p className="final-sub">
-          Five minutes to start. We handle the rest. No hold music, no awkward calls, no risk if it doesn&apos;t work out.
+          Five minutes to set up. Slash handles the rest — the login, the audit, the negotiation, the waiting. You approve the win.
         </p>
 
         <div className="hero-ctas" style={{ justifyContent: "center" }}>
           <Link href="/sign-up" className="btn btn-primary btn-lg">
-            Slash my bills for $35 <span aria-hidden>→</span>
+            Start for $15/mo <span aria-hidden>→</span>
           </Link>
         </div>
 
         <div className="hero-trust" style={{ justifyContent: "center" }}>
-          <div><strong>Free</strong> if we can&apos;t save $100+/yr</div>
+          <div><strong>0%</strong> of your savings</div>
           <span className="dot-sep" />
-          <div><strong>$35 back</strong> if you reject</div>
+          <div><strong>30-day</strong> money back</div>
+          <span className="dot-sep" />
+          <div><strong>Cancel</strong> anytime</div>
         </div>
       </div>
     </section>

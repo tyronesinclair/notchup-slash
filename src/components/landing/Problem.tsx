@@ -12,19 +12,22 @@ export default function Problem() {
     <section className="problem">
       <div className="container problem-grid">
         <div>
-          <div className="kicker">The math</div>
+          <div className="kicker">Why Slash exists</div>
           <h2 className="section-h">
-            The average Canadian household quietly hands{" "}
+            Loyalty is a{" "}
             <em style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400 }}>
-              $487 a year
-            </em>{" "}
-            to their telecom — for plans they could&apos;ve negotiated down in 20 minutes.
+              tax
+            </em>
+            . Your provider quietly raises your rate every year and bets you won&apos;t sit on hold to fight it.
           </h2>
+          <p className="section-sub" style={{ marginTop: 16 }}>
+            The retention team has a better price ready. They only give it to people who ask, push, and wait. Slash asks, pushes, and waits for you.
+          </p>
         </div>
         <div className="problem-stats">
-          <Stat big="73%" label="of Canadians have never negotiated their bill." />
-          <Stat big="38min" label="average hold time with a retention agent." />
-          <Stat big="$487" label="annual overpayment on phone + internet." />
+          <Stat big="$487" label="a year the average Canadian household overpays on phone, internet and TV." />
+          <Stat big="73%" label="of Canadians have never once negotiated a bill." />
+          <Stat big="38min" label="average hold time to reach a retention agent. Slash sits through it, not you." />
         </div>
       </div>
     </section>

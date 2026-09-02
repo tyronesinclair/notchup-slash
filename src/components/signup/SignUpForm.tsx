@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import StepIndicator from "./StepIndicator";
 import ServicesStep from "./ServicesStep";
@@ -8,7 +8,7 @@ import PaymentStep from "./PaymentStep";
 
 export type ServiceEntry = {
   id: string;
-  serviceType: "internet" | "cell_phone";
+  serviceType: "internet" | "cell_phone" | "tv" | "home_phone";
   provider: string;
   providerOther?: string;
 };
@@ -17,11 +17,15 @@ export type FormData = {
   services: ServiceEntry[];
   name: string;
   email: string;
-  paymentType: "immediate" | "scheduled";
-  scheduledDate: string;
+  paymentType: "subscription";
+  stripeSubscriptionId?: string;
+  stripeCustomerId?: string;
+  stripePriceId?: string;
+  chargeConsent: boolean;
 };
 
-const STEPS = ["Your Info", "Services", "Payment"];
+const STEPS = ["Your Info", "Your Bills", "Subscribe"];
+const STORAGE_KEY = "notchup_slash_form";
 
 export default function SignUpForm() {
   const pathname = usePathname();
@@ -30,53 +34,52 @@ export default function SignUpForm() {
     services: [],
     name: "",
     email: "",
-    paymentType: "scheduled",
-    scheduledDate: "",
+    paymentType: "subscription",
+    chargeConsent: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  // track what intent type the current clientSecret was created for
-  const [intentType, setIntentType] = useState<"immediate" | "scheduled">("immediate");
 
   const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  const updateFormData = (patch: Partial<FormData>) =>
-    setFormData((prev) => ({ ...prev, ...patch }));
-
-  const handleContactNext = (contact: { name: string; email: string }) => {
-    updateFormData(contact);
-    next();
+  // Everything the confirmation page needs survives the Stripe redirect via sessionStorage.
+  const persist = (data: FormData) => {
+    setFormData(data);
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
   };
 
-  const fetchIntent = async (email: string, type: "immediate" | "scheduled", date?: string) => {
-    const res = await fetch(`${base}/api/stripe/create-payment-intent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, paymentType: type, scheduledDate: date }),
-    });
-    return res.json();
+  const handleContactNext = (contact: { name: string; email: string }) => {
+    persist({ ...formData, ...contact });
+    next();
   };
 
   const handleServicesSubmit = async (services: ServiceEntry[]) => {
     const updated = { ...formData, services };
-    setFormData(updated);
+    persist(updated);
     setIsSubmitting(true);
-
+    setSubmitError(null);
     try {
-      setSubmitError(null);
-      sessionStorage.setItem("notchup_slash_form", JSON.stringify(updated));
-
-      const data = await fetchIntent(updated.email, updated.paymentType, updated.scheduledDate);
-      if (data.clientSecret) {
+      const res = await fetch(`${base}/api/stripe/create-subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: updated.email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.clientSecret) {
+        persist({
+          ...updated,
+          stripeSubscriptionId: data.subscriptionId,
+          stripeCustomerId: data.customerId,
+          stripePriceId: data.priceId,
+        });
         setClientSecret(data.clientSecret);
-        setIntentType(updated.paymentType);
         next();
       } else {
-        setSubmitError("Payment setup failed. Please try again.");
+        setSubmitError(data.error ?? "Checkout setup failed. Please try again.");
       }
     } catch {
       setSubmitError("Network error. Please check your connection and try again.");
@@ -85,40 +88,9 @@ export default function SignUpForm() {
     }
   };
 
-  const handlePaymentTypeChange = async (type: "immediate" | "scheduled", date?: string) => {
-    updateFormData({ paymentType: type, scheduledDate: date ?? "" });
-
-    // Re-create the Stripe intent if the type changed — mixing up intent types causes
-    // confirmSetup vs confirmPayment to fail silently with an infinite spinner.
-    if (type !== intentType) {
-      setClientSecret(null); // show loading state in PaymentStep while re-fetching
-      try {
-        const data = await fetchIntent(formData.email, type, date);
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-          setIntentType(type);
-        }
-      } catch {
-        // fall through — PaymentStep will show loading; user can go back
-      }
-    }
+  const handleConsentChange = (chargeConsent: boolean) => {
+    persist({ ...formData, chargeConsent });
   };
-
-  // Keep sessionStorage in sync when paymentType/date changes on the payment step
-  useEffect(() => {
-    if (step === 2) {
-      const raw = sessionStorage.getItem("notchup_slash_form");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          sessionStorage.setItem(
-            "notchup_slash_form",
-            JSON.stringify({ ...parsed, paymentType: formData.paymentType, scheduledDate: formData.scheduledDate })
-          );
-        } catch {}
-      }
-    }
-  }, [formData.paymentType, formData.scheduledDate, step]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -143,7 +115,7 @@ export default function SignUpForm() {
           <PaymentStep
             formData={formData}
             clientSecret={clientSecret}
-            onPaymentTypeChange={handlePaymentTypeChange}
+            onConsentChange={handleConsentChange}
             onBack={back}
           />
         )}

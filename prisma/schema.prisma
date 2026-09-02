@@ -17,10 +17,29 @@ model Customer {
   browserbaseContextId String?   // persistent telco-login browser profile (trust-cookie store)
   activationStatus     String    @default("not_started") // not_started | in_progress | activated | failed
   notes                String?   // operator case notes
+  // Consent to charge the saved card for add-on NotchUp services (captured at checkout).
+  chargeConsent        Boolean   @default(false)
+  chargeConsentAt      DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   services             Service[]
   payment              Payment?
+  charges              Charge[]
+}
+
+// Ad-hoc off-session charges against the saved card (audit trail).
+model Charge {
+  id                    String   @id @default(cuid())
+  customerId            String
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount                Int      // cents
+  currency              String   @default("cad")
+  reason                String
+  stripePaymentIntentId String?
+  status                String   @default("pending") // succeeded | failed | pending
+  createdAt             DateTime @default(now())
+
+  @@index([customerId])
 }
 
 model Service {
@@ -66,10 +85,15 @@ model Payment {
   customer              Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   amount                Int       @default(3500)
   currency              String    @default("cad")
-  paymentType           String    // "immediate" | "scheduled"
+  paymentType           String    // "immediate" | "scheduled" | "subscription"
   scheduledDate         DateTime?
   stripePaymentIntentId String?
   stripePaymentMethodId String?
+  // Subscription ($15/mo) fields — legacy immediate/scheduled fields above are kept
+  // for grandfathered $35 customers.
+  stripeSubscriptionId  String?
+  stripePriceId         String?
+  subscriptionStatus    String?   // incomplete | active | past_due | cancelled
   status                String    @default("pending")
   paidAt                DateTime?
   createdAt             DateTime  @default(now())

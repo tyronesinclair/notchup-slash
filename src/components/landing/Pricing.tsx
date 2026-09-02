@@ -1,14 +1,6 @@
 import Link from "next/link";
 
-function ExampleStep({ label, value, sub, highlight, muted }: { label: string; value: string; sub: string; highlight?: boolean; muted?: boolean }) {
-  return (
-    <div className={`ex-step ${highlight ? "ex-highlight" : ""} ${muted ? "ex-muted" : ""}`}>
-      <div className="ex-label">{label}</div>
-      <div className="ex-value">{value}</div>
-      <div className="ex-sub">{sub}</div>
-    </div>
-  );
-}
+const serif = { fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic" as const, fontWeight: 400 };
 
 export default function Pricing() {
   return (
@@ -17,60 +9,83 @@ export default function Pricing() {
         <div className="section-header">
           <div className="kicker">Pricing</div>
           <h2 className="section-h">
-            Pay less than a coffee. <span style={{ color: "var(--muted)" }}>Save hundreds a year.</span>
+            One flat price. <span style={{ color: "var(--muted)" }}>Zero percent of your savings.</span>
           </h2>
-          <p className="section-sub" style={{ maxWidth: 600 }}>
-            One transparent fee. We only win when you win — and if you don&apos;t, you don&apos;t owe a cent.
+          <p className="section-sub" style={{ maxWidth: 620 }}>
+            Most bill negotiators take a big cut of what they win you. We don&apos;t. $15 a month, and the win is 100% yours.
           </p>
         </div>
 
-        <div className="price-grid">
-          <div className="price-card">
-            <div className="price-label">Activation</div>
-            <div className="price-big">$35<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> one-time</span></div>
-            <ul className="price-list">
-              <li>AI agent setup for your account</li>
-              <li>Full bill audit + line-item analysis</li>
-              <li>Negotiation with retention dept.</li>
-            </ul>
-          </div>
-
+        <div className="price-grid price-grid-2">
           <div className="price-card price-card-feature">
-            <div className="price-tag">Most popular</div>
-            <div className="price-label" style={{ color: "var(--accent-ink)" }}>Success fee</div>
-            <div className="price-big">40%<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> of year-one savings</span></div>
+            <div className="price-tag">Everything included</div>
+            <div className="price-label" style={{ color: "var(--accent-ink)" }}>Slash</div>
+            <div className="price-big">$15<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> / month</span></div>
             <ul className="price-list">
-              <li>Charged <em>only</em> after you approve the offer</li>
-              <li>You keep the other 60% — and every cent after year one</li>
-              <li>Reject the offer? Get your $35 back</li>
+              <li>Unlimited bills — internet, mobile, TV, home phone</li>
+              <li>Full line-by-line bill audit</li>
+              <li>Negotiation with your provider&apos;s retention team</li>
+              <li>You approve every offer before anything changes</li>
+              <li><strong>0% of your savings — you keep all of it</strong></li>
+              <li>Cancel anytime, two clicks, no call</li>
             </ul>
             <Link href="/sign-up" className="btn btn-primary btn-lg" style={{ justifyContent: "center", marginTop: 8 }}>
-              Get started — $35 <span aria-hidden>→</span>
+              Start for $15/mo <span aria-hidden>→</span>
             </Link>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>Charged monthly · cancel anytime</div>
           </div>
 
           <div className="price-card price-guarantee">
             <div className="price-label">Guarantee</div>
-            <div className="price-big" style={{ fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic", fontWeight: 400 }}>Risk-free</div>
+            <div className="price-big" style={{ ...serif, fontSize: 52 }}>30 days, no questions</div>
             <ul className="price-list">
-              <li>Can&apos;t save $100+/yr? Completely free.</li>
-              <li>Don&apos;t like our offer? $35 fully refunded.</li>
-              <li>6-month window to find your savings.</li>
+              <li>Not for you? Full refund within 30 days.</li>
+              <li>No forms, no &ldquo;why are you leaving,&rdquo; no hold music.</li>
+              <li>After that, cancel anytime and just stop paying.</li>
             </ul>
+            <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>
+              We can afford this because we don&apos;t need a slice of your win to make money. $15 a month covers the work.
+            </p>
           </div>
         </div>
 
-        <div className="example">
-          <div className="kicker" style={{ marginBottom: 8 }}>Example math</div>
-          <div className="example-row">
-            <ExampleStep label="Found savings" value="$50/mo" sub="on Rogers Internet" />
-            <div className="ex-arrow" aria-hidden>→</div>
-            <ExampleStep label="Year-one savings" value="$600" sub="annual reduction" />
-            <div className="ex-arrow" aria-hidden>→</div>
-            <ExampleStep label="NotchUp takes" value="$240" sub="40% of year one" muted />
-            <div className="ex-arrow" aria-hidden>→</div>
-            <ExampleStep label="You keep" value="$325" sub="after $35 fee" highlight />
+        {/* Comparison — the reason to pick a flat fee */}
+        <div className="compare">
+          <div className="kicker" style={{ marginBottom: 6 }}>Same $600 win, three ways</div>
+          <p className="compare-sub">Say we knock $50/mo off your internet — $600 a year. Here&apos;s who keeps what.</p>
+
+          <div className="compare-rows">
+            <div className="compare-row compare-row-us">
+              <div className="compare-who">
+                <strong>Slash</strong>
+                <span>$15/mo · keeps 0%</span>
+              </div>
+              <div className="compare-bar">
+                <div className="compare-keep" style={{ flex: 600 }}>You keep <strong>$600</strong></div>
+              </div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-who">
+                <strong>Typical negotiator</strong>
+                <span>keeps 40% of year one</span>
+              </div>
+              <div className="compare-bar">
+                <div className="compare-keep" style={{ flex: 360 }}>You keep <strong>$360</strong></div>
+                <div className="compare-cut" style={{ flex: 240 }}>They keep <strong>$240</strong></div>
+              </div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-who">
+                <strong>The expensive ones</strong>
+                <span>keep up to 60%</span>
+              </div>
+              <div className="compare-bar">
+                <div className="compare-keep" style={{ flex: 240 }}>You keep <strong>$240</strong></div>
+                <div className="compare-cut" style={{ flex: 360 }}>They keep <strong>$360</strong></div>
+              </div>
+            </div>
           </div>
+          <p className="compare-fine">Slash&apos;s $180/yr subscription is the only cost — and it&apos;s refundable in the first 30 days. Competitor percentages are typical industry success-fee ranges.</p>
         </div>
       </div>
     </section>

@@ -751,3 +751,96 @@ img, svg { display: block; }
   .calc-big { font-size: 48px; }
   .footer-grid { grid-template-columns: 1fr; }
 }
+
+/* ── v2: $15/mo subscription overhaul ──────────────── */
+
+/* 3-step how-it-works */
+.steps-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* Which bills */
+.bills { padding: 120px 0; background: var(--bg); border-top: 1px solid var(--line); }
+.bills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.bill-group {
+  border-radius: 22px; padding: 28px 28px 26px;
+  border: 1px solid var(--line); background: var(--bg);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.bill-now { border: 2px solid var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--bg)); }
+.bill-soon { background: var(--bg-soft); }
+.bill-cancel { background: var(--bg-soft); }
+.bill-no { background: var(--bg-soft); }
+.bill-kicker {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+.bill-now .bill-kicker { color: var(--accent-ink); }
+.bill-title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+.bill-body { font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 6px; }
+.bill-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.bill-chip {
+  font-size: 13px; padding: 5px 11px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--line); color: var(--ink);
+}
+.bill-now .bill-chip { border-color: color-mix(in oklab, var(--accent) 60%, transparent); }
+.bill-no .bill-chip, .bill-cancel .bill-chip { color: var(--muted); }
+.bill-note { margin: 28px 0 0; font-size: 14px; color: var(--muted); max-width: 720px; }
+
+/* Pricing v2 */
+.price-grid-2 { grid-template-columns: 1.1fr 0.9fr; }
+.compare {
+  background: var(--bg-soft); border: 1px solid var(--line);
+  border-radius: 22px; padding: 32px 36px;
+}
+.compare-sub { font-size: 15px; color: var(--ink-soft); margin: 0 0 22px; }
+.compare-rows { display: flex; flex-direction: column; gap: 12px; }
+.compare-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; }
+.compare-who { display: flex; flex-direction: column; gap: 2px; }
+.compare-who strong { font-size: 15px; letter-spacing: -0.01em; }
+.compare-who span { font-size: 12.5px; color: var(--muted); }
+.compare-bar {
+  display: flex; height: 48px; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--line); background: var(--bg); font-size: 12.5px;
+}
+.compare-bar > div { display: flex; align-items: center; gap: 6px; padding: 0 14px; min-width: 0; white-space: nowrap; overflow: hidden; }
+.compare-bar strong { font-size: 15px; }
+.compare-keep { background: var(--accent); color: var(--accent-ink); font-weight: 500; }
+.compare-cut { background: var(--bg-deep); color: var(--muted); }
+.compare-row-us .compare-keep { background: var(--accent-ink); color: #FFFFFF; }
+.compare-fine { margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+
+/* Trust & safety */
+.trust { padding: 120px 0; background: var(--bg-soft); border-top: 1px solid var(--line); }
+.trust-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; }
+.trust-col { background: var(--bg); border: 1px solid var(--line); border-radius: 22px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
+.trust-col-h {
+  font-family: var(--font-inter-tight), 'Inter Tight', sans-serif;
+  font-size: 22px; font-weight: 600; letter-spacing: -0.02em; padding-bottom: 14px; border-bottom: 1px dashed var(--line);
+}
+.trust-col-never { color: var(--ink); }
+.trust-col-always { color: var(--accent-ink); }
+.trust-item { display: flex; gap: 14px; align-items: flex-start; }
+.trust-mark {
+  display: inline-grid; place-items: center; flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-top: 1px;
+}
+.trust-mark-never { background: #FEF2F2; color: #991B1B; }
+.trust-mark-always { background: var(--accent-soft); color: var(--accent-ink); }
+.trust-t { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; }
+.trust-d { font-size: 14px; color: var(--ink-soft); line-height: 1.5; margin-top: 2px; }
+
+@media (max-width: 960px) {
+  .steps-3 { grid-template-columns: 1fr; }
+  .bills-grid { grid-template-columns: 1fr; }
+  .price-grid-2 { grid-template-columns: 1fr; }
+  .trust-grid { grid-template-columns: 1fr; }
+  .compare-row { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 720px) {
+  .bills, .trust { padding: 64px 0; }
+  .bill-group { padding: 22px 20px; }
+  .bill-title { font-size: 19px; }
+  .compare { padding: 22px 20px; }
+  .compare-bar { height: 56px; flex-direction: column; }
+  .compare-bar > div { padding: 0 12px; flex: 1 !important; font-size: 12px; }
+  .trust-col { padding: 22px; }
+}
