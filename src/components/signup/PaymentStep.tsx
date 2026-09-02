@@ -15,41 +15,23 @@ type Props = {
   onBack: () => void;
 };
 
-const PROVIDER_SAVINGS: Record<string, number> = {
-  Rogers: 487, Bell: 462, Telus: 441, Videotron: 390,
-  "Freedom Mobile": 320, Koodo: 310, Fido: 298, "Virgin Plus": 305, Shaw: 380,
-};
-
-function SavingsEstimate({ services }: { services: FormData["services"] }) {
-  const providers = [...new Set(services.map((s) => s.provider))];
-  const maxSavings = providers.reduce((max, p) => Math.max(max, PROVIDER_SAVINGS[p] ?? 400), 400);
-  const label = providers.length === 1 ? `${providers[0]} customers` : "Customers like you";
-  return (
-    <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-      <span className="text-green-600 text-lg shrink-0">💰</span>
-      <p className="text-xs text-green-800 leading-snug">
-        <strong>{label} save an average of ${maxSavings}/year</strong> — and every dollar of it is yours. Slash is $15/mo, 0% of your savings.
-      </p>
-    </div>
-  );
-}
-
 function PaymentForm({ formData, onConsentChange }: { formData: FormData; onConsentChange: Props["onConsentChange"] }) {
   const stripe = useStripe();
   const elements = useElements();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [consent, setConsent] = useState(formData.chargeConsent);
+  // Optional: keep the card on file for other NotchUp services. NOT required to subscribe.
+  const [addOnConsent, setAddOnConsent] = useState(formData.chargeConsent);
 
-  const toggleConsent = (v: boolean) => {
-    setConsent(v);
+  const toggleAddOn = (v: boolean) => {
+    setAddOnConsent(v);
     onConsentChange(v);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements || !consent) return;
+    if (!stripe || !elements) return;
     setIsLoading(true);
     setError(null);
     const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
@@ -79,7 +61,13 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
         Keep 100% of what we save you. Cancel anytime. 30-day money-back guarantee, no questions asked.
       </p>
 
-      <SavingsEstimate services={formData.services} />
+      {/* One disclaimed estimate — no invented per-provider figures. */}
+      <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+        <span className="text-green-600 text-lg shrink-0">💰</span>
+        <p className="text-xs text-green-800 leading-snug">
+          <strong>Typical Canadian households save an estimated $487/year</strong> on phone, internet and TV — and every dollar is yours. Slash is $15/mo, 0% of your savings.
+        </p>
+      </div>
 
       {/* Plan summary */}
       <div className="mb-5 bg-gray-50 rounded-xl p-4 text-sm">
@@ -88,7 +76,7 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
           <span className="font-bold text-gray-900">$15.00 CAD</span>
         </div>
         <div className="flex justify-between items-center text-xs text-gray-400">
-          <span>Renews monthly · cancel anytime</span>
+          <span>Renews monthly until you cancel</span>
           <span>Charged today</span>
         </div>
         <div className="flex justify-between items-center text-xs text-green-700 font-semibold mt-2 pt-2 border-t border-gray-200">
@@ -111,16 +99,16 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
         <p className="text-xs text-gray-400 mt-1.5">Apple Pay &amp; Google Pay supported where available.</p>
       </div>
 
-      {/* Consent — required. This is what makes later one-tap add-on charges legitimate. */}
-      <label className="mb-5 flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 cursor-pointer">
+      {/* Optional, separate, unchecked by default — not bundled with the subscription. */}
+      <label className="mb-4 flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 cursor-pointer">
         <input
           type="checkbox"
-          checked={consent}
-          onChange={(e) => toggleConsent(e.target.checked)}
+          checked={addOnConsent}
+          onChange={(e) => toggleAddOn(e.target.checked)}
           className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
         />
         <span className="text-xs text-gray-600 leading-snug">
-          Save my card for this subscription and for NotchUp services I choose to add later. I&apos;ll always be asked before anything else is charged, and I can cancel or remove my card anytime.
+          <span className="font-semibold text-gray-700">Optional:</span> also keep my card on file for other NotchUp services I choose to add later. I&apos;ll always be asked before anything else is charged, and I can remove it anytime.
         </span>
       </label>
 
@@ -138,13 +126,23 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
 
       <button
         type="submit"
-        disabled={!stripe || isLoading || !consent}
+        disabled={!stripe || isLoading}
         className="w-full py-4 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
       >
         {isLoading ? (<><Loader2 size={16} className="animate-spin" /> Processing…</>) : "Start Slash — $15/mo →"}
       </button>
-      {!consent && <p className="text-xs text-gray-400 text-center mt-2">Tick the box above to continue.</p>}
+
+      {/* Required disclosure: auto-renewal + terms, right where the card is entered. */}
+      <p className="text-[11px] text-gray-400 text-center mt-3 leading-snug">
+        By subscribing you agree to NotchUp&apos;s{" "}
+        <a href="https://www.notchup.app/terms-of-services" target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and{" "}
+        <a href="https://www.notchup.app/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>.
+        $15.00 CAD renews monthly until you cancel. Cancel anytime from your billing page.
+      </p>
+      <p className="text-[11px] text-gray-400 text-center mt-2 leading-snug">
+        <strong className="text-gray-500">Next:</strong> you&apos;ll add your provider login and mobile number. Providers text a one-time sign-in code — we&apos;ll ask you to pass it along.
+      </p>
 
       <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-400">
         <ShieldCheck size={13} />

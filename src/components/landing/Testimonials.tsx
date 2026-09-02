@@ -1,4 +1,7 @@
-const testimonials = [
+// These are ILLUSTRATIVE examples, not real customer quotes, and are labelled as such
+// on every card. Swap in real, consented testimonials (and drop the tag) when you have them.
+
+const examples = [
   {
     quote: "I'd been meaning to call Rogers for over a year and kept putting it off. Slash handled the whole thing. My bill went from $119 to $57 — and I kept all of it.",
     who: "Sarah K.", where: "Toronto, ON", saving: "$62/mo", carrier: "Rogers Internet", initials: "SK",
@@ -9,7 +12,7 @@ const testimonials = [
     who: "Michael T.", where: "Calgary, AB", saving: "$38/mo", carrier: "Bell Mobility", initials: "MT",
   },
   {
-    quote: "Added internet and my phone. It did them one after the other and I didn't touch a thing after signing up. Genuinely impressed.",
+    quote: "Added internet and my phone. Slash worked them one after the other — I passed along one text code and approved two offers. That was it.",
     who: "Priya N.", where: "Vancouver, BC", saving: "$44/mo", carrier: "Telus Internet + Mobile", initials: "PN",
   },
   {
@@ -23,18 +26,22 @@ export default function Testimonials() {
     <section id="proof" className="testimonials">
       <div className="container">
         <div className="section-header">
-          <div className="kicker">Member stories</div>
+          <div className="kicker">What a win looks like</div>
           <h2 className="section-h">
-            Real savings. <span style={{ color: "var(--muted)" }}>All theirs to keep.</span>
+            Wins like these <span style={{ color: "var(--muted)" }}>are 100% yours to keep.</span>
           </h2>
+          <p className="section-sub">
+            Illustrative examples of the kind of retention offers Slash negotiates for. Your result depends on your plan and provider.
+          </p>
         </div>
 
         <div className="t-grid">
-          {testimonials.map((t) => (
+          {examples.map((t) => (
             <figure key={t.initials} className={`t-card ${t.feature ? "t-feature" : ""}`}>
               <div className="t-saving">
                 <span className="t-amount">{t.saving}</span>
                 <span className="t-carrier">{t.carrier}</span>
+                <span className="t-illustrative">Illustrative example</span>
               </div>
               <blockquote>{t.quote}</blockquote>
               <figcaption>

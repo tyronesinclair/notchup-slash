@@ -21,7 +21,7 @@ export type FormData = {
   stripeSubscriptionId?: string;
   stripeCustomerId?: string;
   stripePriceId?: string;
-  chargeConsent: boolean;
+  chargeConsent: boolean; // optional add-on card consent; never required to subscribe
 };
 
 const STEPS = ["Your Info", "Your Bills", "Subscribe"];
@@ -40,6 +40,9 @@ export default function SignUpForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  // Email the current clientSecret was issued for — lets Back → Continue reuse the same
+  // incomplete subscription instead of minting a duplicate on the Stripe customer.
+  const [secretEmail, setSecretEmail] = useState<string | null>(null);
 
   const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
 
@@ -60,13 +63,20 @@ export default function SignUpForm() {
   const handleServicesSubmit = async (services: ServiceEntry[]) => {
     const updated = { ...formData, services };
     persist(updated);
+
+    // Same email, subscription already created → just go to checkout.
+    if (clientSecret && secretEmail === updated.email) {
+      next();
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
     try {
       const res = await fetch(`${base}/api/stripe/create-subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: updated.email }),
+        body: JSON.stringify({ email: updated.email, name: updated.name, services: updated.services }),
       });
       const data = await res.json();
       if (res.ok && data.clientSecret) {
@@ -77,6 +87,7 @@ export default function SignUpForm() {
           stripePriceId: data.priceId,
         });
         setClientSecret(data.clientSecret);
+        setSecretEmail(updated.email);
         next();
       } else {
         setSubmitError(data.error ?? "Checkout setup failed. Please try again.");

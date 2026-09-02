@@ -40,7 +40,7 @@ export default function Providers() {
   return (
     <section className="carriers" aria-label="Providers we negotiate with">
       <div className="container">
-        <div className="carrier-label">Works with every major Canadian internet, mobile &amp; TV provider</div>
+        <div className="carrier-label">Works with Rogers, Bell, Telus and most major Canadian internet, mobile &amp; TV providers</div>
         <div className="carrier-marquee">
           <div className="carrier-track">
             {doubled.map((c, i) => (<CarrierLogo key={i} name={c} />))}

@@ -97,7 +97,7 @@ export default function BillReceipt() {
         </div>
 
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed var(--line)", display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
-          <span>3–5 weeks · zero phone calls</span>
+          <span>Illustrative example · zero calls you make</span>
           <span style={{ fontFamily: "monospace" }}>SLASH-{stage === 2 ? "DONE" : "0042"}</span>
         </div>
       </div>

@@ -23,6 +23,29 @@ const TYPE_LABEL: Record<string, string> = {
   home_phone: "Home phone",
 };
 
+// Sent from the /manage page: the subscriber's tokenized Stripe billing-portal link.
+export async function sendManageLinkEmail(email: string, url: string) {
+  const html = `
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Your Slash billing link</title></head>
+    <body style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px; color: #101828;">
+      <div style="margin-bottom: 28px;">
+        <span style="font-size: 20px; font-weight: 800; color: #4F4EA5;">NotchUp</span>
+        <span style="font-size: 20px; font-weight: 800; background: #4F4EA5; color: #fff; padding: 2px 8px; border-radius: 4px; margin-left: 4px;">Slash</span>
+      </div>
+      <h1 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Your billing page</h1>
+      <p style="color: #475467; margin-bottom: 20px;">Cancel, update your card, or download invoices — no login needed. This link is unique to you; don't forward it.</p>
+      <p style="margin-bottom: 24px;"><a href="${url}" style="display:inline-block;padding:12px 22px;background:#4F4EA5;color:#fff;border-radius:999px;font-weight:700;text-decoration:none;">Open my billing page</a></p>
+      <p style="color: #667085; font-size: 13px;">Want a refund in your first 30 days? Just reply to this email — no questions asked.</p>
+      <p style="color: #667085; font-size: 13px;">Didn't request this? You can ignore it. Questions: <a href="mailto:help@notchup.app" style="color:#7F56D9;">help@notchup.app</a></p>
+    </body></html>`;
+  await resend.emails.send({
+    from: "NotchUp Slash <slash@notchup.app>",
+    to: email,
+    subject: "Your Slash billing link",
+    html,
+  });
+}
+
 export async function sendConfirmationEmail({
   name,
   email,

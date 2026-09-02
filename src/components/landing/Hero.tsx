@@ -34,7 +34,7 @@ export default function Hero() {
           </h1>
 
           <p className="hero-sub">
-            Slash logs into your Rogers, Bell or Telus account, finds every overcharge, and negotiates it down with the retention team. You just approve the win. No hold music. No awkward calls.
+            Slash logs into your Rogers, Bell or Telus account, finds the overcharges, and negotiates them down with the retention team. You pass along one sign-in code, then just approve the win. No hold music. No awkward calls.
           </p>
 
           <div className="hero-promise">
@@ -61,11 +61,11 @@ export default function Hero() {
           <BillReceipt />
 
           <div className="float-chip" style={{ top: -18, left: -24 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>This month</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>This month · example</div>
             <div style={{ fontFamily: "var(--font-inter-tight), 'Inter Tight', sans-serif", fontWeight: 600, fontSize: 18, color: "var(--accent-ink)" }}>+$62 saved</div>
           </div>
 
-          <div className="hero-stamp" aria-label="You keep 100% of savings">
+          <div className="hero-stamp" role="img" aria-label="You keep 100% of savings — Slash takes 0%">
             <svg viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
               <defs>
                 <path id="circ" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />

@@ -5,7 +5,7 @@ import { normalizeE164 } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   try {
-    const { customerId, services, phone } = await req.json();
+    const { customerId, services, phone, accessConsent } = await req.json();
 
     if (!customerId || !services?.length) {
       return NextResponse.json({ error: "Missing customerId or services" }, { status: 400 });
@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       data: {
         status: "credentials_received",
         ...(normalizedPhone && { phone: normalizedPhone }),
+        // Record the customer's written authorization to access their provider account.
+        ...(accessConsent && { accessConsentAt: new Date() }),
       },
     });
 

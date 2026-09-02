@@ -63,7 +63,7 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
           </nav>
 
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <a href="https://notchup.app" className="nav-sign-in">Sign in</a>
+            <Link href="/manage" className="nav-sign-in">Manage subscription</Link>
             {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Start for $15/mo <span aria-hidden>→</span></Link>}
             {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$15/mo →</Link>}
             <button
@@ -88,7 +88,7 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
               </Link>
             ))}
             <div className="nav-drawer-footer">
-              <a href="https://notchup.app" className="nav-drawer-signin" onClick={close}>Sign in</a>
+              <Link href="/manage" className="nav-drawer-signin" onClick={close}>Manage subscription</Link>
               {!hideSignUpCta && (
                 <Link href="/sign-up" className="btn btn-primary" style={{ justifyContent: "center" }} onClick={close}>
                   Start for $15/mo →

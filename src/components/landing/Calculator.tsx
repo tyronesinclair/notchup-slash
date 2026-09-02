@@ -18,7 +18,7 @@ function Slider({ label, value, setValue, min, max, prefix = "", suffix = "" }: 
         </span>
       </div>
       <div className="slider-track" style={{ "--pct": `${pct}%` } as React.CSSProperties}>
-        <input type="range" min={min} max={max} value={value} onChange={(e) => setValue(Number(e.target.value))} />
+        <input type="range" aria-label={label} min={min} max={max} value={value} onChange={(e) => setValue(Number(e.target.value))} />
       </div>
     </div>
   );
@@ -42,7 +42,7 @@ export default function Calculator() {
           <div className="kicker">Find your number</div>
           <h2 className="section-h">How much is the loyalty tax costing you?</h2>
           <p className="section-sub">
-            Drag the sliders. This is what we typically win on similar Canadian plans — and since we keep 0%, it&apos;s all yours minus the $15/mo.
+            Drag the sliders. This is an estimate of what a retention offer typically knocks off similar Canadian plans — and since we keep 0%, it&apos;s all yours minus the $15/mo.
           </p>
           <div className="calc-controls">
             <Slider label="Internet bill" value={internet} setValue={setInternet} min={40} max={250} prefix="$" suffix="/mo" />
@@ -74,7 +74,7 @@ export default function Calculator() {
               Keep ${youKeep.toLocaleString()} this year <span aria-hidden>→</span>
             </Link>
             <div className="calc-fine">
-              Estimate based on a 32% avg. reduction across approved offers. Not a guarantee — but if we don&apos;t deliver, there&apos;s a 30-day refund.
+              Estimate based on a typical ~32% retention-offer reduction. Not a guarantee. If Slash isn&apos;t for you, full refund in your first 30 days.
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ export default function Pricing() {
             <ul className="price-list">
               <li>Not for you? Full refund within 30 days.</li>
               <li>No forms, no &ldquo;why are you leaving,&rdquo; no hold music.</li>
-              <li>After that, cancel anytime and just stop paying.</li>
+              <li>After that, cancel anytime and you won&apos;t be charged again.</li>
             </ul>
             <p style={{ fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>
               We can afford this because we don&apos;t need a slice of your win to make money. $15 a month covers the work.
@@ -58,10 +58,11 @@ export default function Pricing() {
             <div className="compare-row compare-row-us">
               <div className="compare-who">
                 <strong>Slash</strong>
-                <span>$15/mo · keeps 0%</span>
+                <span>keeps 0% · $180/yr flat → <strong>$420 net</strong></span>
               </div>
               <div className="compare-bar">
-                <div className="compare-keep" style={{ flex: 600 }}>You keep <strong>$600</strong></div>
+                <div className="compare-keep" style={{ flex: 420 }}>You keep <strong>$420</strong> after the sub</div>
+                <div className="compare-sub" style={{ flex: 180 }}>Slash <strong>$180</strong></div>
               </div>
             </div>
             <div className="compare-row">
@@ -85,7 +86,7 @@ export default function Pricing() {
               </div>
             </div>
           </div>
-          <p className="compare-fine">Slash&apos;s $180/yr subscription is the only cost — and it&apos;s refundable in the first 30 days. Competitor percentages are typical industry success-fee ranges.</p>
+          <p className="compare-fine">Slash&apos;s $180/yr subscription is the only cost — refundable in your first 30 days — and it covers every bill you add, not just this one. Competitor percentages are typical industry success-fee ranges, not claims about any specific company.</p>
         </div>
       </div>
     </section>

@@ -2,8 +2,16 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Clock, ArrowRight, XCircle, ShieldCheck, Eye, EyeOff, Loader2, Wifi, Smartphone, Sparkles } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, XCircle, ShieldCheck, Eye, EyeOff, Loader2, Wifi, Smartphone, Tv, Phone, Sparkles } from "lucide-react";
 import { isValidPhone } from "@/lib/phone";
+
+const TYPE_LABEL: Record<string, string> = { internet: "Internet", cell_phone: "Mobile", tv: "TV / Cable", home_phone: "Home phone" };
+function typeIcon(t: string) {
+  if (t === "internet") return <Wifi size={14} />;
+  if (t === "tv") return <Tv size={14} />;
+  if (t === "home_phone") return <Phone size={14} />;
+  return <Smartphone size={14} />;
+}
 
 type ServiceEntry = { id: string; serviceType: string; provider: string };
 type CredEntry = { serviceId: string; provider: string; serviceType: string; username: string; password: string; accountNumber: string; showPass: boolean };
@@ -20,6 +28,10 @@ function ConfirmationContent() {
   const [phase, setPhase] = useState<"success" | "credentials" | "done">("success");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [manageUrl, setManageUrl] = useState<string | null>(null);
+  // "missing" = no sign-up data in this browser (refresh / private mode); "submit" = /api/submit failed.
+  const [loadError, setLoadError] = useState<null | "missing" | "submit">(null);
+  const [credError, setCredError] = useState<string | null>(null);
+  const [authorized, setAuthorized] = useState(false);
   const [creds, setCreds] = useState<CredEntry[]>([]);
   const [phone, setPhone] = useState("");
   const [savingCreds, setSavingCreds] = useState(false);
@@ -32,7 +44,7 @@ function ConfirmationContent() {
     const paymentIntent = params.get("payment_intent");
     const setupIntent = params.get("setup_intent");
     const raw = sessionStorage.getItem("notchup_slash_form");
-    if (!raw) return;
+    if (!raw) { setLoadError("missing"); return; }
 
     try {
       const formData = JSON.parse(raw);
@@ -45,6 +57,7 @@ function ConfirmationContent() {
       })
         .then((r) => r.json())
         .then((data) => {
+          if (!data?.customerId) { setLoadError("submit"); return; }
           if (data.manageUrl) setManageUrl(data.manageUrl);
           if (data.customerId) {
             setCustomerId(data.customerId);
@@ -61,9 +74,10 @@ function ConfirmationContent() {
             );
           }
         })
-        .catch(console.error);
+        .catch(() => setLoadError("submit"));
 
-      sessionStorage.removeItem("notchup_slash_form");
+      // Keep the sign-up payload until credentials are saved or explicitly skipped, so a
+      // refresh here never strands a paying customer.
 
       fetch(`${base}/api/track`, {
         method: "POST",
@@ -104,9 +118,10 @@ function ConfirmationContent() {
       const res = await fetch(`${base}/api/credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, services: payload, phone }),
+        body: JSON.stringify({ customerId, services: payload, phone, accessConsent: authorized }),
       });
       if (!res.ok) throw new Error("credentials save failed");
+      try { sessionStorage.removeItem("notchup_slash_form"); } catch {}
       fetch(`${base}/api/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,7 +129,7 @@ function ConfirmationContent() {
       }).catch(() => {});
       setPhase("done");
     } catch {
-      alert("Failed to save. Please try again.");
+      setCredError("We couldn't save that. Please try again — or email help@notchup.app and we'll finish setup with you.");
     } finally {
       setSavingCreds(false);
     }
@@ -174,7 +189,7 @@ function ConfirmationContent() {
   // ─── CREDENTIALS ───
   if (phase === "credentials" && creds.length > 0) {
     const phoneOk = isValidPhone(phone);
-    const canSubmit = creds.every((c) => c.username && c.password) && phoneOk;
+    const canSubmit = creds.every((c) => c.username && c.password) && phoneOk && authorized;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16" style={{ background: "var(--bg)" }}>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12 max-w-lg w-full">
@@ -190,7 +205,7 @@ function ConfirmationContent() {
           <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 mb-6">
             <ShieldCheck size={16} className="text-blue-600 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-800 leading-relaxed">
-              <strong>AES-256 encrypted.</strong> Stored securely. Only used by our AI agents — never visible to humans or shared with third parties.
+              <strong>AES-256 encrypted at rest.</strong> Decrypted only when Slash — or a NotchUp operator supervising it — signs in to work your account. Never sold, and never shared beyond the services that run Slash.
             </p>
           </div>
           <form onSubmit={handleCredentialsSubmit}>
@@ -209,7 +224,7 @@ function ConfirmationContent() {
                 <p className="text-xs text-red-500 mt-1.5">Enter a valid 10-digit Canadian mobile number.</p>
               ) : (
                 <p className="text-xs text-gray-400 mt-1.5">
-                  So we can text you the verification code when we log in to negotiate. Canadian mobile, standard rates.
+                  When Slash signs in, your provider texts a one-time code to this number — we&apos;ll ask you to pass it along. Canadian mobile, standard rates.
                 </p>
               )}
             </div>
@@ -218,11 +233,11 @@ function ConfirmationContent() {
                 <div key={idx} className="rounded-xl border border-gray-200 p-5">
                   <div className="flex items-center gap-2.5 mb-4">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0" style={{ background: "#4F4EA5" }}>
-                      {cred.serviceType === "internet" ? <Wifi size={14} /> : <Smartphone size={14} />}
+                      {typeIcon(cred.serviceType)}
                     </div>
                     <div>
                       <div className="text-sm font-bold text-gray-900">{cred.provider}</div>
-                      <div className="text-xs text-gray-400">{cred.serviceType === "internet" ? "Internet" : "Cell Phone"}</div>
+                      <div className="text-xs text-gray-400">{TYPE_LABEL[cred.serviceType] ?? cred.serviceType}</div>
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -248,7 +263,7 @@ function ConfirmationContent() {
                           placeholder="Your account password"
                           className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
                         />
-                        <button type="button" onClick={() => updateCred(idx, { showPass: !cred.showPass })} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <button type="button" aria-label={cred.showPass ? "Hide password" : "Show password"} onClick={() => updateCred(idx, { showPass: !cred.showPass })} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                           {cred.showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
@@ -267,11 +282,18 @@ function ConfirmationContent() {
                 </div>
               ))}
             </div>
+            <label className="mt-5 flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 cursor-pointer">
+              <input type="checkbox" checked={authorized} onChange={(e) => setAuthorized(e.target.checked)} className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0" />
+              <span className="text-xs text-gray-600 leading-snug">
+                I authorize NotchUp Slash to sign in to the account(s) above and negotiate with my provider on my behalf. I understand nothing changes on my plan without my approval.
+              </span>
+            </label>
+            {credError && <p className="mt-3 text-xs text-red-600">{credError}</p>}
             <button type="submit" disabled={!canSubmit || savingCreds} className="mt-6 w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed" style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}>
               {savingCreds ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : "Submit & finish →"}
             </button>
-            <button type="button" onClick={() => setPhase("done")} className="mt-3 w-full text-xs text-gray-400 hover:text-gray-600 underline py-1">
-              I&apos;ll do this later (we&apos;ll send a reminder)
+            <button type="button" onClick={() => { try { sessionStorage.removeItem("notchup_slash_form"); } catch {} setPhase("done"); }} className="mt-3 w-full text-xs text-gray-400 hover:text-gray-600 underline py-1">
+              I&apos;ll do this later — I can reply to my confirmation email when I&apos;m ready
             </button>
           </form>
         </div>
@@ -332,9 +354,18 @@ function ConfirmationContent() {
           )}
         </div>
 
+        {loadError && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 text-left">
+            {loadError === "missing"
+              ? "We couldn't find your sign-up details in this browser (this happens after a refresh or in private mode). Your subscription is safe — email "
+              : "Your payment went through, but we hit a snag saving your details. Nothing to redo — email "}
+            <a href="mailto:help@notchup.app" className="underline font-semibold">help@notchup.app</a> and we&apos;ll finish setup for you.
+          </div>
+        )}
         <button
+          disabled={!!loadError || !customerId}
           onClick={() => setPhase("credentials")}
-          className="w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 mb-2"
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
         >
           <ShieldCheck size={15} />

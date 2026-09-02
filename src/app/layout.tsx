@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     template: "%s | NotchUp Slash",
   },
   description:
-    "Slash is an AI agent that logs into your Rogers, Bell or Telus account and negotiates your internet, mobile and TV bills down. $15/month, you keep 100% of the savings. 30-day money-back guarantee.",
+    "Slash is an AI agent that logs into your Rogers, Bell or Telus account and negotiates your bills down. $15/mo, keep 100% of the savings, 30-day refund.",
   keywords: [
     "lower Rogers bill",
     "lower Bell bill",

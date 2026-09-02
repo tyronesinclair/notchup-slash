@@ -15,6 +15,33 @@ function invoiceSubscriptionId(obj: unknown): string | null {
   return typeof raw === "string" ? raw : raw.id;
 }
 
+async function recoverFromSubscription(subId: string) {
+  const sub = await stripe.subscriptions.retrieve(subId);
+  const email = sub.metadata?.email?.trim().toLowerCase();
+  if (!email) return;
+  const name = sub.metadata?.name || email.split("@")[0];
+  let services: { t?: string; p?: string }[] = [];
+  try { services = JSON.parse(sub.metadata?.services || "[]"); } catch {}
+  const stripeCustomerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+
+  const customer = await prisma.customer.upsert({
+    where: { email },
+    update: { stripeCustomerId },
+    create: { name, email, phone: "", stripeCustomerId },
+  });
+  for (const s of services) {
+    if (!s.t || !s.p) continue;
+    const exists = await prisma.service.findFirst({ where: { customerId: customer.id, provider: s.p, serviceType: s.t } });
+    if (!exists) await prisma.service.create({ data: { customerId: customer.id, serviceType: s.t, provider: s.p, encryptedCredentials: "" } });
+  }
+  await prisma.payment.upsert({
+    where: { customerId: customer.id },
+    update: { paymentType: "subscription", stripeSubscriptionId: subId, subscriptionStatus: "active", status: "paid", amount: SUB_AMOUNT, paidAt: new Date() },
+    create: { customerId: customer.id, paymentType: "subscription", stripeSubscriptionId: subId, subscriptionStatus: "active", status: "paid", amount: SUB_AMOUNT, paidAt: new Date() },
+  });
+  console.log("webhook: recovered orphaned subscription", subId, "for", email);
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -38,10 +65,13 @@ export async function POST(req: NextRequest) {
     if (event.type === "invoice.paid") {
       const subId = invoiceSubscriptionId(obj);
       if (subId) {
-        await prisma.payment.updateMany({
+        const { count } = await prisma.payment.updateMany({
           where: { stripeSubscriptionId: subId },
           data: { status: "paid", subscriptionStatus: "active", amount: SUB_AMOUNT, paidAt: new Date() },
         });
+        // Backstop: the customer paid but /api/submit never ran (page closed/refreshed).
+        // Rebuild the record from the subscription metadata so no paid customer is orphaned.
+        if (count === 0) await recoverFromSubscription(subId);
       }
     } else if (event.type === "invoice.payment_failed") {
       const subId = invoiceSubscriptionId(obj);

@@ -29,7 +29,7 @@ export default function SignUpPage() {
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mb-4 text-violet-700 bg-violet-50 border border-violet-200">
               <Clock size={12} />
-              Takes 2 minutes · We handle the rest
+              About 5 minutes · Slash handles the rest
             </div>
             <h1
               className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2"

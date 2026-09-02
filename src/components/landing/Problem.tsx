@@ -25,9 +25,10 @@ export default function Problem() {
           </p>
         </div>
         <div className="problem-stats">
-          <Stat big="$487" label="a year the average Canadian household overpays on phone, internet and TV." />
-          <Stat big="73%" label="of Canadians have never once negotiated a bill." />
-          <Stat big="38min" label="average hold time to reach a retention agent. Slash sits through it, not you." />
+          {/* Figures are estimates — see the savings disclaimer in the footer. */}
+          <Stat big="$487" label="a year a typical Canadian household can save on phone, internet and TV — an estimate, and every dollar of it stays yours." />
+          <Stat big="0" label="calls you make, hold queues you sit in, retention scripts you argue with. Slash does the waiting." />
+          <Stat big="$15" label="a month, flat. No percentage of your savings, ever. 30-day money back if it's not for you." />
         </div>
       </div>
     </section>

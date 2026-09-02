@@ -10,11 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1.0,
     },
-    {
-      url: `${SITE_URL}/slash/sign-up`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+    // /sign-up is noindex (funnel page) and /manage is utility — neither belongs in the sitemap.
   ];
 }

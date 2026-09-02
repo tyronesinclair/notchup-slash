@@ -13,21 +13,21 @@ const groups: Group[] = [
     tone: "now",
     kicker: "Slash negotiates these now",
     title: "Internet · Mobile · TV · Home phone",
-    body: "Every major Canadian carrier and most regional ones. This is where the biggest loyalty tax lives, and where retention teams have the most room to move.",
+    body: "Rogers, Bell, Telus and most major Canadian carriers, plus many regional ones. This is where the biggest loyalty tax lives, and where retention teams have the most room to move.",
     items: ["Rogers", "Bell", "Telus", "Shaw", "Videotron", "Freedom Mobile", "Fido", "Koodo", "Virgin Plus", "Cogeco", "Eastlink", "Regional carriers"],
   },
   {
     tone: "soon",
     kicker: "Coming next",
     title: "Home security · Insurance",
-    body: "Same playbook, new providers. Add them to your queue now and we'll tell you the moment we can work them.",
+    body: "Same playbook, new providers. We'll email every subscriber the moment we can work these — nothing to add on your end yet.",
     items: ["ADT", "Telus SmartHome", "Home insurance", "Auto insurance"],
   },
   {
     tone: "cancel",
-    kicker: "Can't negotiate — we'll help you cancel",
+    kicker: "Can't negotiate — flat-rate subscriptions",
     title: "Streaming · Gym · Software",
-    body: "Flat-rate subscriptions don't haggle. We'll tell you plainly, then show you the fastest way out if you want it.",
+    body: "These don't haggle, so we won't pretend to. We'll tell you plainly and point you to the fastest way out if you want it.",
     items: ["Netflix", "Crave", "Spotify", "Gym memberships", "App subscriptions"],
   },
   {
@@ -49,7 +49,7 @@ export default function Bills() {
             Straight answer on every bill. <span style={{ color: "var(--muted)" }}>Even the ones we can&apos;t touch.</span>
           </h2>
           <p className="section-sub">
-            Add as many bills as you want under one $15/mo subscription. We work them one at a time, so each gets our full attention — starting with your biggest.
+            Add as many bills as you want under one $15/mo subscription. We work them one at a time, so each gets our full attention — starting with the first one you add.
           </p>
         </div>
 

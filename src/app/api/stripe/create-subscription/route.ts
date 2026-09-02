@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
     if (!EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
     }
+    // Stash name + bills in metadata so the webhook can rebuild the customer record if
+    // the confirmation page never completes (refresh, private mode, closed tab).
+    const name = String(body.name ?? "").slice(0, 120);
+    const services = Array.isArray(body.services)
+      ? JSON.stringify(body.services.map((s: { serviceType?: string; provider?: string }) => ({ t: s.serviceType, p: s.provider })).slice(0, 8)).slice(0, 480)
+      : "";
 
     const priceId = await ensurePrice();
 
@@ -31,7 +37,7 @@ export async function POST(req: NextRequest) {
         payment_method_types: ["card"],
       },
       expand: ["latest_invoice.confirmation_secret"],
-      metadata: { email, product: "slash", plan: "monthly_15" },
+      metadata: { email, name, services, product: "slash", plan: "monthly_15" },
     });
 
     const invoice = sub.latest_invoice as unknown as

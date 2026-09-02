@@ -20,6 +20,8 @@ model Customer {
   // Consent to charge the saved card for add-on NotchUp services (captured at checkout).
   chargeConsent        Boolean   @default(false)
   chargeConsentAt      DateTime?
+  // Written authorization for Slash to sign in to the provider account (credentials step).
+  accessConsentAt      DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   services             Service[]

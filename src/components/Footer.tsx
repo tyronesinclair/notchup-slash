@@ -12,7 +12,7 @@ export default function Footer() {
             />
           </a>
           <p style={{ color: "var(--ink-soft)", fontSize: 14, marginTop: 14, maxWidth: 320, lineHeight: 1.5 }}>
-            Make any day payday.
+            Slash — the AI agent that lowers your bills. A NotchUp product.
           </p>
           <div style={{ marginTop: 18, fontSize: 13.5, color: "var(--ink-soft)", lineHeight: 1.7 }}>
             <div>(778) 400-5126</div>
@@ -55,10 +55,7 @@ export default function Footer() {
           <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Shaw, Videotron, Freedom Mobile, Fido Solutions, Koodo Mobile, Virgin Plus, Cogeco, Eastlink, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
         </p>
         <p>
-          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr average, 32% reduction, calculator estimates, and member stories, which are illustrative) reflect outcomes of approved offers and are not a guarantee of future results. Actual savings depend on your current plan, carrier, and account history. Competitor fee ranges cited are typical industry success-fee percentages, not claims about any specific company.
-        </p>
-        <p>
-          Not all members will qualify for advances; depending on eligibility, advances range from $50 – $1,500. Subject to NotchUp&apos;s approval and policies.
+          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr, ~32% reduction, calculator results) are estimates based on typical retention-offer reductions for comparable Canadian plans; they are not results from Slash customers and not a guarantee. The example stories and sample bill on this page are illustrative, not real customer quotes. Actual savings depend on your plan, provider, and account history. Competitor fee ranges cited are typical industry success-fee percentages, not claims about any specific company.
         </p>
         <p>
           <strong>License Disclosure</strong> — British Columbia, January 11, 2024 License #86443
