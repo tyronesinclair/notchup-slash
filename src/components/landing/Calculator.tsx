@@ -64,7 +64,7 @@ export default function Calculator() {
                   <strong>${youKeep.toLocaleString()}</strong>
                 </div>
                 <div className="calc-bar-fee" style={{ flex: SUB_YEAR }}>
-                  <span>Slash · $15/mo</span>
+                  <span>Slash</span>
                   <strong>${SUB_YEAR}</strong>
                 </div>
               </div>

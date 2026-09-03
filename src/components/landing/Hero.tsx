@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BillReceipt from "./BillReceipt";
-import HeroHeadline from "./HeroHeadline";
+import { HERO_VARIANTS, type Variant } from "@/lib/experiment";
 
 const serif = { fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic" as const, fontWeight: 400 };
 
@@ -16,15 +16,26 @@ function PromiseChip({ icon, title, body }: { icon: string; title: string; body:
   );
 }
 
-export default function Hero() {
+export default function Hero({ variant = "a" }: { variant?: Variant }) {
+  const h = HERO_VARIANTS[variant];
   return (
     <section className="hero">
       <div className="container hero-grid">
         <div>
           <div className="pill">🇨🇦 An AI agent for Canadian bills · by NotchUp</div>
 
-          {/* A/B surface: headline + lede (see src/lib/experiment.ts) */}
-          <HeroHeadline />
+          {/* A/B surface: headline + lede. Arm chosen in src/proxy.ts, copy in src/lib/experiment.ts */}
+          <h1 className="hero-h1" data-variant={variant}>
+            {h.lead}{" "}
+            <span className="hero-strike-wrap">
+              {h.struck}
+              <svg className="hero-strike" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M2,18 Q100,4 200,12 T398,8" stroke="var(--accent)" strokeWidth="10" fill="none" strokeLinecap="round" />
+              </svg>
+            </span>{" "}
+            <em style={{ ...serif, color: "var(--accent-ink)" }}>{h.tail}</em>
+          </h1>
+          <p className="hero-sub">{h.lede}</p>
 
           <div className="hero-promise">
             <div className="hero-promise-headline">

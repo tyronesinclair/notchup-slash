@@ -42,6 +42,12 @@ const UTM_KEY = "slash_utm";
 export function getVariant(assign = false): Variant | null {
   if (typeof window === "undefined") return null;
   try {
+    // Server-assigned arm (src/proxy.ts sets a cookie on the landing page)
+    const c = document.cookie.match(/(?:^|;\s*)slash_var=([a-z])/)?.[1];
+    if (c && c in HERO_VARIANTS) {
+      localStorage.setItem(VAR_KEY, c);
+      return c as Variant;
+    }
     // Explicit preview/override: any defined variant, e.g. ?var=c
     const override = new URLSearchParams(window.location.search).get("var");
     if (override && override in HERO_VARIANTS) {
