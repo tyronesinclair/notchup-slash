@@ -29,7 +29,7 @@ export type FormData = {
   stripeSubscriptionId?: string;
   stripeCustomerId?: string;
   stripePriceId?: string;
-  chargeConsent: boolean; // optional add-on card consent; never required to subscribe
+  chargeConsent: boolean; // card-on-file consent — disclosed at checkout, applies to every subscriber
   variant?: string | null; // hero A/B arm the visitor saw (null if they never saw the landing)
   utm?: Attribution;       // first-touch UTMs (email blast attribution)
 };
@@ -45,7 +45,7 @@ export default function SignUpForm() {
     name: "",
     email: "",
     paymentType: "subscription",
-    chargeConsent: false,
+    chargeConsent: true,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -113,10 +113,6 @@ export default function SignUpForm() {
     }
   };
 
-  const handleConsentChange = (chargeConsent: boolean) => {
-    persist({ ...formData, chargeConsent });
-  };
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       <StepIndicator steps={STEPS} current={step} />
@@ -140,7 +136,6 @@ export default function SignUpForm() {
           <PaymentStep
             formData={formData}
             clientSecret={clientSecret}
-            onConsentChange={handleConsentChange}
             onBack={back}
           />
         )}

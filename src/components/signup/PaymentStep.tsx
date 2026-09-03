@@ -9,24 +9,15 @@ import { FormData } from "./SignUpForm";
 type Props = {
   formData: FormData;
   clientSecret: string | null;
-  onConsentChange: (consent: boolean) => void;
   onBack: () => void;
 };
 
-function PaymentForm({ formData, onConsentChange }: { formData: FormData; onConsentChange: Props["onConsentChange"] }) {
+function PaymentForm({ formData }: { formData: FormData }) {
   const stripe = useStripe();
   const elements = useElements();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Optional: keep the card on file for other NotchUp services. NOT required to subscribe.
-  const [addOnConsent, setAddOnConsent] = useState(formData.chargeConsent);
-
-  const toggleAddOn = (v: boolean) => {
-    setAddOnConsent(v);
-    onConsentChange(v);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
@@ -91,24 +82,17 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
             options={{
               layout: "tabs",
               fields: { billingDetails: { name: "never", email: "never" } },
+              terms: { card: "never" }, // we render the mandate sentence ourselves, above
             }}
           />
         </div>
         <p className="text-xs text-gray-400 mt-1.5">Apple Pay &amp; Google Pay supported where available.</p>
       </div>
 
-      {/* Optional, separate, unchecked by default — not bundled with the subscription. */}
-      <label className="mb-4 flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={addOnConsent}
-          onChange={(e) => toggleAddOn(e.target.checked)}
-          className="mt-0.5 w-4 h-4 accent-violet-600 shrink-0"
-        />
-        <span className="text-xs text-gray-600 leading-snug">
-          <span className="font-semibold text-gray-700">Optional:</span> also keep my card on file for other NotchUp services I choose to add later. I&apos;ll always be asked before anything else is charged, and I can remove it anytime.
-        </span>
-      </label>
+      {/* Card-on-file consent — shown in full, applies to everyone (replaces the old opt-in checkbox). */}
+      <p className="mb-4 text-xs text-gray-600 leading-snug">
+        By providing your card information, you allow NotchUp to charge your card for future payments in accordance with their terms.
+      </p>
 
       {error && (
         <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">{error}</div>
@@ -150,7 +134,7 @@ function PaymentForm({ formData, onConsentChange }: { formData: FormData; onCons
   );
 }
 
-export default function PaymentStep({ formData, clientSecret, onConsentChange, onBack }: Props) {
+export default function PaymentStep({ formData, clientSecret, onBack }: Props) {
   if (!clientSecret) {
     return (
       <div className="text-center py-12">
@@ -180,7 +164,7 @@ export default function PaymentStep({ formData, clientSecret, onConsentChange, o
         <div className="mb-4">
           <button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600 underline">← Back</button>
         </div>
-        <PaymentForm formData={formData} onConsentChange={onConsentChange} />
+        <PaymentForm formData={formData} />
       </div>
     </Elements>
   );
