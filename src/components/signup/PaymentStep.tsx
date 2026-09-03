@@ -1,12 +1,10 @@
 "use client";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { getStripe } from "@/lib/stripe-client";
 import { Loader2, ShieldCheck, RotateCcw } from "lucide-react";
 import { FormData } from "./SignUpForm";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 type Props = {
   formData: FormData;
@@ -166,7 +164,7 @@ export default function PaymentStep({ formData, clientSecret, onConsentChange, o
   return (
     <Elements
       key={clientSecret}
-      stripe={stripePromise}
+      stripe={getStripe()}
       options={{
         clientSecret,
         appearance: {

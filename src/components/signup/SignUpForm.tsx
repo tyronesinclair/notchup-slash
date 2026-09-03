@@ -4,7 +4,14 @@ import { usePathname } from "next/navigation";
 import StepIndicator from "./StepIndicator";
 import ServicesStep from "./ServicesStep";
 import ContactStep from "./ContactStep";
-import PaymentStep from "./PaymentStep";
+import dynamic from "next/dynamic";
+import { getStripe } from "@/lib/stripe-client";
+
+// Code-split: Stripe Elements + Stripe.js only load once the user is heading to checkout.
+const PaymentStep = dynamic(() => import("./PaymentStep"), {
+  ssr: false,
+  loading: () => <div className="py-16 text-center text-sm text-gray-400">Loading secure checkout…</div>,
+});
 import { getVariant, getAttribution, type Attribution } from "@/lib/experiment";
 
 export type ServiceEntry = {
@@ -59,6 +66,9 @@ export default function SignUpForm() {
   };
 
   const handleContactNext = (contact: { name: string; email: string }) => {
+    // Warm up checkout while they pick bills so step 3 is instant.
+    import("./PaymentStep");
+    getStripe();
     // Attach attribution here (a click handler, so no SSR/hydration concerns).
     persist({ ...formData, ...contact, variant: getVariant(), utm: getAttribution() });
     next();

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 export default function SignUpPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <link rel="preconnect" href="https://js.stripe.com" />
       <PageTracker event="form_start" />
       <Nav hideSignUpCta />
       <main className="flex-1 flex items-start justify-center py-10 px-4">
