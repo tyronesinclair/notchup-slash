@@ -48,6 +48,8 @@ async function getStats() {
     revenueResult,
     activationGroups,
     missingPhoneCount,
+    taggedEvents,
+    variantCustomers,
   ] = await Promise.all([
     prisma.customer.count(),
     prisma.payment.count({ where: { status: "paid" } }),
@@ -67,7 +69,35 @@ async function getStats() {
     prisma.customer.groupBy({ by: ["activationStatus"], _count: { _all: true } }),
     // Customers who gave us credentials but have no phone — can't relay the OTP.
     prisma.customer.count({ where: { status: "credentials_received", phone: "" } }),
+    // Hero A/B: every tagged funnel event (meta JSON carries the variant)…
+    prisma.analyticsEvent.findMany({
+      where: { event: { in: ["page_view", "form_start", "contact_submit", "payment_success"] } },
+      select: { event: true, meta: true },
+    }),
+    // …and paid customers by the arm they saw.
+    prisma.customer.findMany({
+      where: { variant: { not: null } },
+      select: { variant: true, payment: { select: { status: true } } },
+    }),
   ]);
+
+  // Per-variant funnel (views → sign-up clicks → contact → paid). Untagged events are pre-experiment.
+  const experiment: Record<string, { views: number; starts: number; contacts: number; paid: number }> = {};
+  const bump = (v: string, k: "views" | "starts" | "contacts" | "paid") => {
+    experiment[v] ??= { views: 0, starts: 0, contacts: 0, paid: 0 };
+    experiment[v][k] += 1;
+  };
+  for (const e of taggedEvents) {
+    let v: string | null = null;
+    try { v = e.meta ? (JSON.parse(e.meta).variant ?? null) : null; } catch {}
+    if (!v) continue;
+    if (e.event === "page_view") bump(v, "views");
+    else if (e.event === "form_start") bump(v, "starts");
+    else if (e.event === "contact_submit") bump(v, "contacts");
+  }
+  for (const c of variantCustomers) {
+    if (c.variant && c.payment?.status === "paid") bump(c.variant, "paid");
+  }
 
   const eventMap = Object.fromEntries(
     eventCounts.map((e) => [e.event, e._count.event])
@@ -84,6 +114,7 @@ async function getStats() {
     totalRevenueCents: revenueResult._sum.amount ?? 0,
     activationMap,
     missingPhoneCount,
+    experiment,
   };
 }
 
@@ -204,7 +235,10 @@ export default async function AdminPage({
     totalRevenueCents,
     activationMap,
     missingPhoneCount,
+    experiment,
   } = stats;
+  const experimentArms = Object.keys(experiment).sort();
+  const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");
 
   const actNotStarted = activationMap["not_started"] ?? 0;
   const actInProgress = activationMap["in_progress"] ?? 0;
@@ -536,6 +570,53 @@ export default async function AdminPage({
               );
             })}
           </div>
+        </div>
+
+        {/* Hero A/B experiment */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>
+              Hero A/B test
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Per landing-page variant. Judge on <strong>sign-up click rate</strong> (views → form starts) — that&apos;s the hero&apos;s job and the only column with enough volume. Paid needs hundreds of conversions to mean anything. Preview an arm with <code>?var=a|b|c</code>.
+            </p>
+          </div>
+          {experimentArms.length === 0 ? (
+            <p className="px-6 py-6 text-xs text-gray-400">No tagged traffic yet — events start carrying a variant from the first landing-page view after deploy.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    <th className="text-left px-6 py-3">Variant</th>
+                    <th className="text-right px-6 py-3">Views</th>
+                    <th className="text-right px-6 py-3">Sign-up clicks</th>
+                    <th className="text-right px-6 py-3">Click rate</th>
+                    <th className="text-right px-6 py-3">Contact</th>
+                    <th className="text-right px-6 py-3">Paid</th>
+                    <th className="text-right px-6 py-3">Paid / view</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {experimentArms.map((arm) => {
+                    const x = experiment[arm];
+                    return (
+                      <tr key={arm} className="border-b border-gray-50">
+                        <td className="px-6 py-3 font-mono font-bold text-gray-900 uppercase">{arm}</td>
+                        <td className="px-6 py-3 text-right text-gray-700">{x.views.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-right text-gray-700">{x.starts.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-right font-semibold text-gray-900">{pct(x.starts, x.views)}</td>
+                        <td className="px-6 py-3 text-right text-gray-700">{x.contacts.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-right text-gray-700">{x.paid.toLocaleString()}</td>
+                        <td className="px-6 py-3 text-right text-gray-500">{pct(x.paid, x.views)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* All customers */}

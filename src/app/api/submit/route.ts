@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
       stripeCustomerId: bodyStripeCustomerId,
       stripePriceId,
       chargeConsent,
+      variant,
+      utm,
     } = await req.json();
 
     if (!name || !email || !services?.length) {
@@ -57,6 +59,14 @@ export async function POST(req: NextRequest) {
 
     const normalizedPhone = normalizeE164(phone);
     const consent = !!chargeConsent;
+    // A/B arm + first-touch UTMs (email-blast attribution). Strings only, capped.
+    const s = (v: unknown, n = 120) => (typeof v === "string" && v ? v.slice(0, n) : null);
+    const attribution = {
+      ...(s(variant, 8) && { variant: s(variant, 8) }),
+      ...(s(utm?.utm_source) && { utmSource: s(utm?.utm_source) }),
+      ...(s(utm?.utm_medium) && { utmMedium: s(utm?.utm_medium) }),
+      ...(s(utm?.utm_campaign) && { utmCampaign: s(utm?.utm_campaign) }),
+    };
 
     const customer = await prisma.customer.upsert({
       where: { email },
@@ -64,6 +74,7 @@ export async function POST(req: NextRequest) {
         name,
         ...(normalizedPhone && { phone: normalizedPhone }),
         ...(stripeCustomerId && { stripeCustomerId }),
+        ...attribution,
         ...(consent && { chargeConsent: true, chargeConsentAt: new Date() }),
       },
       create: {
@@ -73,6 +84,7 @@ export async function POST(req: NextRequest) {
         stripeCustomerId: stripeCustomerId ?? undefined,
         chargeConsent: consent,
         chargeConsentAt: consent ? new Date() : undefined,
+        ...attribution,
       },
     });
 

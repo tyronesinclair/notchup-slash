@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { getVariant } from "@/lib/experiment";
 
 type ContactData = { name: string; email: string };
 type FieldError = { name?: string; email?: string };
@@ -50,7 +51,7 @@ export default function ContactStep({ initial, onNext }: Props) {
     fetch(`${base}/api/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event: "contact_submit" }),
+      body: JSON.stringify({ event: "contact_submit", meta: { variant: getVariant() } }),
     }).catch(() => {});
     onNext(data);
   };

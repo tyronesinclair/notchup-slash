@@ -4,6 +4,7 @@ import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Clock, ArrowRight, XCircle, ShieldCheck, Eye, EyeOff, Loader2, Wifi, Smartphone, Tv, Phone, Sparkles } from "lucide-react";
 import { isValidPhone } from "@/lib/phone";
+import { getVariant } from "@/lib/experiment";
 
 const TYPE_LABEL: Record<string, string> = { internet: "Internet", cell_phone: "Mobile", tv: "TV / Cable", home_phone: "Home phone" };
 function typeIcon(t: string) {
@@ -82,7 +83,7 @@ function ConfirmationContent() {
       fetch(`${base}/api/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: "payment_success", meta: { scheduled } }),
+        body: JSON.stringify({ event: "payment_success", meta: { scheduled, variant: getVariant() } }),
       }).catch(() => {});
     } catch (e) {
       console.error(e);

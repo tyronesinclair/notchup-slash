@@ -5,6 +5,7 @@ import StepIndicator from "./StepIndicator";
 import ServicesStep from "./ServicesStep";
 import ContactStep from "./ContactStep";
 import PaymentStep from "./PaymentStep";
+import { getVariant, getAttribution, type Attribution } from "@/lib/experiment";
 
 export type ServiceEntry = {
   id: string;
@@ -22,6 +23,8 @@ export type FormData = {
   stripeCustomerId?: string;
   stripePriceId?: string;
   chargeConsent: boolean; // optional add-on card consent; never required to subscribe
+  variant?: string | null; // hero A/B arm the visitor saw (null if they never saw the landing)
+  utm?: Attribution;       // first-touch UTMs (email blast attribution)
 };
 
 const STEPS = ["Your Info", "Your Bills", "Subscribe"];
@@ -56,7 +59,8 @@ export default function SignUpForm() {
   };
 
   const handleContactNext = (contact: { name: string; email: string }) => {
-    persist({ ...formData, ...contact });
+    // Attach attribution here (a click handler, so no SSR/hydration concerns).
+    persist({ ...formData, ...contact, variant: getVariant(), utm: getAttribution() });
     next();
   };
 

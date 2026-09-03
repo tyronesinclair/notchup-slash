@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BillReceipt from "./BillReceipt";
+import HeroHeadline from "./HeroHeadline";
 
 const serif = { fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif", fontStyle: "italic" as const, fontWeight: 400 };
 
@@ -22,20 +23,8 @@ export default function Hero() {
         <div>
           <div className="pill">🇨🇦 An AI agent for Canadian bills · by NotchUp</div>
 
-          <h1 className="hero-h1">
-            The AI agent that{" "}
-            <span className="hero-strike-wrap">
-              lowers your bills
-              <svg className="hero-strike" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M2,18 Q100,4 200,12 T398,8" stroke="var(--accent)" strokeWidth="10" fill="none" strokeLinecap="round" />
-              </svg>
-            </span>{" "}
-            <em style={{ ...serif, color: "var(--accent-ink)" }}>so you don&apos;t have to.</em>
-          </h1>
-
-          <p className="hero-sub">
-            Slash logs into your Rogers, Bell or Telus account, finds the overcharges, and negotiates them down with the retention team. You pass along one sign-in code, then just approve the win. No hold music. No awkward calls.
-          </p>
+          {/* A/B surface: headline + lede (see src/lib/experiment.ts) */}
+          <HeroHeadline />
 
           <div className="hero-promise">
             <div className="hero-promise-headline">

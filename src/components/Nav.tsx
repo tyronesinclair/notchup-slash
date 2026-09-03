@@ -7,7 +7,7 @@ const NAV_LINKS = [
   { href: "/#how", label: "How it works" },
   { href: "/#bills", label: "Which bills" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/#trust", label: "Trust" },
+  { href: "/#trust", label: "Security" },
   { href: "/#faq", label: "FAQ" },
 ];
 

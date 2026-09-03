@@ -19,16 +19,16 @@ const groups: Group[] = [
   {
     tone: "soon",
     kicker: "Coming next",
-    title: "Home security · Insurance",
+    title: "Home security · Insurance · Gyms",
     body: "Same playbook, new providers. We'll email every subscriber the moment we can work these — nothing to add on your end yet.",
-    items: ["ADT", "Telus SmartHome", "Home insurance", "Auto insurance"],
+    items: ["ADT", "Telus SmartHome", "Home insurance", "Auto insurance", "Gym memberships"],
   },
   {
     tone: "cancel",
     kicker: "Can't negotiate — flat-rate subscriptions",
-    title: "Streaming · Gym · Software",
+    title: "Streaming · Software",
     body: "These don't haggle, so we won't pretend to. We'll tell you plainly and point you to the fastest way out if you want it.",
-    items: ["Netflix", "Crave", "Spotify", "Gym memberships", "App subscriptions"],
+    items: ["Netflix", "Crave", "Spotify", "App subscriptions"],
   },
   {
     tone: "no",

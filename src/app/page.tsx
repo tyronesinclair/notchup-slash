@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <JsonLd />
-      <PageTracker event="page_view" />
+      <PageTracker event="page_view" assignVariant />
       <Nav />
       <main className="flex-1">
         <Hero />
