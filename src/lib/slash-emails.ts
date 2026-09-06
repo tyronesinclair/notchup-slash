@@ -150,6 +150,41 @@ Questions? Reply to this email. Unsubscribe: ${unsubUrl(p.email)}`,
   };
 }
 
+// ── apply-funnel opt-in follow-up (scheduled ~5 min after they tap "Show me how" on apply.notchup.app) ──
+export function applyOptin(p: { name?: string | null; email: string; url: string }): Tpl {
+  const fn = firstName(p.name);
+  return {
+    subject: `${fn === "there" ? "Here’s" : `${fn}, here’s`} how Slash lowers your bills`,
+    html: shell(`
+      ${H2("You asked us to show you how Slash works. Here it is.")}
+      ${P(`Hi ${fn}. A few minutes ago, while applying with NotchUp, you tapped <strong>“Show me how”</strong> on Slash. Here’s the whole thing in one email.`)}
+      ${P("Slash is an AI agent that logs into your Rogers, Bell or Telus account, finds the overcharges — expired promos, loyalty pricing you were never offered, equipment fees — and negotiates them down with the retention team. You pass along one sign-in code and approve the win. No hold music. No awkward calls.")}
+      ${dealBox([
+        "<strong>$0 today.</strong> Your first $15 comes out on your next payday — you pick the date.",
+        "<strong>Keep 100%</strong> of every dollar Slash wins off your bills. We take $0 of your savings, ever.",
+        "<strong>Cancel anytime.</strong> Before payday from your billing link and you’re never charged; after that, 30-day money back, no questions.",
+      ])}
+      ${P("A typical Canadian household saves an estimated <strong>$487 a year</strong> on phone, internet and TV. Add as many bills as you like under the one $15.")}
+      ${btn(p.url, "Start for $0 today")}
+      ${priceLine}
+      <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#54539B;">Questions? Reply to this email. A real person answers.</p>`,
+      { reason: "You're receiving this because you asked to learn about NotchUp Slash while applying with NotchUp.", unsubscribe: unsubUrl(p.email), preheader: "$0 today. Keep 100% of the savings. Cancel anytime." }),
+    text: `Hi ${fn}. A few minutes ago, while applying with NotchUp, you tapped "Show me how" on Slash. Here's the whole thing in one email.
+
+Slash is an AI agent that logs into your Rogers, Bell or Telus account, finds the overcharges — expired promos, loyalty pricing you were never offered, equipment fees — and negotiates them down with the retention team. You pass along one sign-in code and approve the win. No hold music. No awkward calls.
+
+- $0 today. Your first $15 comes out on your next payday — you pick the date.
+- Keep 100% of every dollar Slash wins. We take $0 of your savings, ever.
+- Cancel anytime. Before payday and you're never charged; after that, 30-day money back.
+
+A typical Canadian household saves an estimated $487 a year on phone, internet and TV.
+
+Start for $0 today: ${p.url}
+
+Questions? Reply to this email. Unsubscribe: ${unsubUrl(p.email)}`,
+  };
+}
+
 // ── 3 days before the first charge ──
 export function paydayReminder(p: { name?: string | null; payday: string; manageUrl: string }): Tpl {
   const fn = firstName(p.name); const day = paydayLabel(p.payday);

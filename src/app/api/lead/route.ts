@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { abandoned, nurture, sendTpl, unsubUrl } from "@/lib/slash-emails";
+import { abandoned, applyOptin, nurture, sendTpl, unsubUrl } from "@/lib/slash-emails";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL ?? "https://notchup.app/slash";
 const ABANDON_AFTER_MIN = Number(process.env.SLASH_ABANDON_AFTER_MIN || 30);
 const NURTURE_AFTER_DAYS = Number(process.env.SLASH_NURTURE_AFTER_DAYS || 3);
+// apply.notchup.app opt-ins ("Show me how" on the post-submit Slash screen) get the
+// follow-up a few minutes later instead of the 30-min abandonment (they never started sign-up).
+const APPLY_OPTIN_AFTER_MIN = Number(process.env.SLASH_APPLY_OPTIN_AFTER_MIN || 5);
 
 // Very light per-IP throttle (this is a public, unauthenticated write).
 const hits = new Map<string, { n: number; t: number }>();
@@ -26,7 +29,13 @@ export async function POST(req: NextRequest) {
     const name = String(b.name ?? "").trim().slice(0, 120);
     if (!EMAIL_RE.test(email) || name.length < 2) return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
     const s = (v: unknown, n = 120) => (typeof v === "string" && v ? v.slice(0, n) : null);
-    const attribution = { variant: s(b.variant, 8), utmSource: s(b.utm?.utm_source), utmMedium: s(b.utm?.utm_medium), utmCampaign: s(b.utm?.utm_campaign), utmContent: s(b.utm?.utm_content) };
+    const fromApply = b.source === "apply_optin";
+    const attribution = {
+      variant: s(b.variant, 8),
+      utmSource: s(b.utm?.utm_source) ?? (fromApply ? "apply" : null),
+      utmMedium: s(b.utm?.utm_medium) ?? (fromApply ? "apply-optin" : null),
+      utmCampaign: s(b.utm?.utm_campaign), utmContent: s(b.utm?.utm_content),
+    };
 
     const existing = await prisma.lead.findUnique({ where: { email } });
     // Already a paying customer? Don't create a lead or schedule anything.
@@ -41,18 +50,26 @@ export async function POST(req: NextRequest) {
     // Each lifecycle email is gated separately (SLASH_ABANDON_EMAIL=on / SLASH_NURTURE_EMAIL=on;
     // SLASH_LIFECYCLE_EMAILS=on enables both). Until on, leads are only recorded.
     const master = process.env.SLASH_LIFECYCLE_EMAILS === "on";
-    const abandonOn = master || process.env.SLASH_ABANDON_EMAIL === "on";
+    // The apply-funnel follow-up has its own switch so it can go live without the abandonment email.
+    const abandonOn = fromApply
+      ? (master || process.env.SLASH_APPLY_OPTIN_EMAIL === "on")
+      : (master || process.env.SLASH_ABANDON_EMAIL === "on");
     const nurtureOn = master || process.env.SLASH_NURTURE_EMAIL === "on";
     const eligible = !paid && !lead.convertedAt && !lead.unsubscribedAt;
     const wantAbandon = abandonOn && eligible && !lead.abandonEmailId && !lead.abandonScheduledAt;
     const wantNurture = nurtureOn && eligible && !lead.nurtureEmailId && !lead.nurtureScheduledAt;
     if (wantAbandon || wantNurture) {
       const link = (campaign: string) => `${PUBLIC_BASE}/sign-up?lead=${lead.id}&utm_source=email&utm_medium=lifecycle&utm_campaign=${campaign}`;
-      const abandonAt = new Date(Date.now() + ABANDON_AFTER_MIN * 60e3);
+      // Apply opt-ins: the "show me how" follow-up ~5 min later (stored in the abandon slot so
+      // /api/submit's cancel-on-conversion still covers it). Everyone else: the 30-min abandonment.
+      const abandonAt = new Date(Date.now() + (fromApply ? APPLY_OPTIN_AFTER_MIN : ABANDON_AFTER_MIN) * 60e3);
       const nurtureAt = new Date(Date.now() + NURTURE_AFTER_DAYS * 86400e3);
       const unsub = unsubUrl(email);
+      const firstTpl = fromApply
+        ? applyOptin({ name, email, url: link("slash-apply-optin") })
+        : abandoned({ name, email, resumeUrl: link("slash-abandon") });
       const results = await Promise.allSettled([
-        wantAbandon ? sendTpl(email, abandoned({ name, email, resumeUrl: link("slash-abandon") }), { scheduledAt: abandonAt, tag: "slash-abandon", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),
+        wantAbandon ? sendTpl(email, firstTpl, { scheduledAt: abandonAt, tag: fromApply ? "slash-apply-optin" : "slash-abandon", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),
         wantNurture ? sendTpl(email, nurture({ name, email, url: link("slash-nurture") }), { scheduledAt: nurtureAt, tag: "slash-nurture", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),
       ]);
       const a = results[0].status === "fulfilled" ? results[0].value.id : null;
