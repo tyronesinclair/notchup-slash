@@ -23,6 +23,10 @@ function ConfirmationContent() {
   const scheduled = params.get("scheduled") === "true";
   const scheduledDate = params.get("date");
   const isSub = params.get("sub") === "true";
+  const payday = params.get("payday");
+  const paydayText = payday && /^\d{4}-\d{2}-\d{2}$/.test(payday)
+    ? new Date(payday + "T12:00:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" })
+    : null;
   const redirectStatus = params.get("redirect_status");
   const failed = redirectStatus === "failed" || redirectStatus === "canceled";
 
@@ -315,11 +319,11 @@ function ConfirmationContent() {
         </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
-            {isSub ? "You're subscribed!" : scheduled ? "You're all set!" : "Payment confirmed!"}
+            {isSub ? "You're in — $0 today." : scheduled ? "You're all set!" : "Payment confirmed!"}
           </h1>
           <p className="text-gray-500 leading-relaxed">
             {isSub
-              ? "Slash is $15/month and you keep 100% of every dollar we save you. One last step to get started."
+              ? (paydayText ? `Nothing was charged. Your first $15 comes out on ${paydayText}, and you keep 100% of every dollar we save you. One last step to get started.` : "Slash is $15/month and you keep 100% of every dollar we save you. One last step to get started.")
               : scheduled
                 ? `Your $35 activation fee is scheduled for ${formattedDate ?? "your chosen date"}. We'll start working on your file right away.`
                 : "Your $35 activation fee is confirmed. Our AI agents will start working on your file."}
@@ -349,7 +353,7 @@ function ConfirmationContent() {
 
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-xs text-green-800">
           {isSub ? (
-            <><strong>30-day money-back guarantee, no questions asked.</strong> Cancel anytime{manageUrl ? <> from your <a href={manageUrl} className="underline font-semibold">billing page</a></> : null}.</>
+            <>{paydayText ? <><strong>Change your mind before {paydayText}?</strong> Cancel{manageUrl ? <> from your <a href={manageUrl} className="underline font-semibold">billing page</a></> : null} and you&apos;re never charged. After that, 30-day money back, no questions asked.</> : <><strong>30-day money-back guarantee, no questions asked.</strong> Cancel anytime{manageUrl ? <> from your <a href={manageUrl} className="underline font-semibold">billing page</a></> : null}.</>}</>
           ) : (
             <><strong>Guarantee:</strong> If we can&apos;t save you $100+/year or you reject our offer, your $35 is fully refunded.</>
           )}

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Plus, Trash2, Wifi, Smartphone, Tv, Phone, Loader2 } from "lucide-react";
+import { Plus, Trash2, Wifi, Smartphone, Tv, Phone, Loader2, CalendarDays } from "lucide-react";
+import { paydayBounds, paydayChips, paydayShort } from "@/lib/payday";
 import { ServiceEntry } from "./SignUpForm";
 import { nanoid } from "nanoid";
 
@@ -22,17 +23,22 @@ const PROVIDERS: Record<BillType, string[]> = {
 
 type Props = {
   initialServices: ServiceEntry[];
-  onSubmit: (services: ServiceEntry[]) => void;
+  initialPayday?: string;
+  onSubmit: (services: ServiceEntry[], payday: string) => void;
   onBack: () => void;
   isLoading?: boolean;
   error?: string | null;
 };
 
-export default function ServicesStep({ initialServices, onSubmit, onBack, isLoading, error }: Props) {
+export default function ServicesStep({ initialServices, initialPayday, onSubmit, onBack, isLoading, error }: Props) {
+  const [payday, setPayday] = useState<string>(initialPayday ?? "");
+  const bounds = paydayBounds();
+  const chips = paydayChips();
   const [services, setServices] = useState<ServiceEntry[]>(
     initialServices.length > 0 ? initialServices : [{ id: nanoid(), serviceType: "internet", provider: "" }]
   );
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const paydayMissing = submitAttempted && !payday;
 
   const addService = () =>
     setServices((prev) => [...prev, { id: nanoid(), serviceType: "cell_phone", provider: "" }]);
@@ -50,7 +56,7 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
         Which bills should Slash work on?
       </h2>
       <p className="text-sm text-gray-500 mb-6">
-        Add every bill you want lowered. We negotiate them one at a time so each gets our full attention — all included in your $15/mo.
+        Add every bill you want lowered. We negotiate them one at a time so each gets our full attention — all included. $0 today — your first $15 comes out on the payday you pick below.
       </p>
 
       <div className="space-y-4">
@@ -118,6 +124,28 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
       )}
 
       {hasIncomplete && <p className="mt-3 text-xs text-amber-600">Please select a provider for each bill to continue.</p>}
+      {/* Payday: nothing is charged today; the first $15 lands on this date. */}
+      <div className={`mt-6 rounded-xl border p-5 ${paydayMissing ? "border-red-300 bg-red-50/40" : "border-violet-200 bg-violet-50/40"}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <CalendarDays size={16} className="text-violet-600" />
+          <h3 className="text-sm font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>When&apos;s your next payday?</h3>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">$0 today. Your first $15 comes out on this date, then monthly on the same day. Cancel before then and you&apos;re never charged.</p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {chips.map((c) => (
+            <button key={c.iso} type="button" onClick={() => setPayday(c.iso)}
+              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${payday === c.iso ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"}`}>
+              {c.label} <span className={payday === c.iso ? "text-violet-100" : "text-gray-400"}>· {paydayShort(c.iso)}</span>
+            </button>
+          ))}
+        </div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Or pick the exact date</label>
+        <input type="date" value={payday} min={bounds.min} max={bounds.max} onChange={(e) => setPayday(e.target.value)}
+          className="w-full sm:w-auto rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400" />
+        {paydayMissing && <p className="text-xs text-red-500 mt-2">Pick your next payday so we know when to start.</p>}
+        {payday && <p className="text-xs text-green-700 font-semibold mt-2">✓ First $15 on {paydayShort(payday)}. Nothing today.</p>}
+      </div>
+
       {error && <div className="mt-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">{error}</div>}
 
       <div className="flex gap-3 mt-3">
@@ -130,7 +158,8 @@ export default function ServicesStep({ initialServices, onSubmit, onBack, isLoad
           onClick={() => {
             setSubmitAttempted(true);
             if (!canSubmit) return;
-            onSubmit(services.map((s) => (s.provider === "Other" && s.providerOther?.trim() ? { ...s, provider: s.providerOther.trim() } : s)));
+            if (!payday) return;
+            onSubmit(services.map((s) => (s.provider === "Other" && s.providerOther?.trim() ? { ...s, provider: s.providerOther.trim() } : s)), payday);
           }}
           className="flex-[2] py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}

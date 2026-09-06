@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { stripe, SUB_AMOUNT, manageUrl } from "@/lib/stripe";
 import { sendConfirmationEmail } from "@/lib/email";
 import { normalizeE164 } from "@/lib/phone";
+import { cancelScheduled } from "@/lib/slash-emails";
+import { trialEndToPayday } from "@/lib/payday";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,10 +47,12 @@ export async function POST(req: NextRequest) {
     // Subscription flow: check Stripe right now in case invoice.paid already fired
     // before this row existed (closes the webhook race).
     let subscriptionStatus: string | null = null;
+    let payday: string | null = null; // YYYY-MM-DD — the trial end = first $15
     if (isSubscription && stripeSubscriptionId) {
       try {
         const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-        subscriptionStatus = sub.status; // active | incomplete | past_due | ...
+        subscriptionStatus = sub.status; // trialing | active | incomplete | past_due | ...
+        if (sub.trial_end) payday = trialEndToPayday(sub.trial_end);
         if (!stripeCustomerId) stripeCustomerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
       } catch (e) {
         console.error("Could not retrieve subscription:", e);
@@ -56,6 +60,7 @@ export async function POST(req: NextRequest) {
       }
     }
     const subActive = subscriptionStatus === "active";
+    const subTrialing = subscriptionStatus === "trialing";
 
     const normalizedPhone = normalizeE164(phone);
     const consent = !!chargeConsent;
@@ -112,9 +117,11 @@ export async function POST(req: NextRequest) {
           stripeSubscriptionId: stripeSubscriptionId ?? null,
           stripePriceId: stripePriceId ?? null,
           subscriptionStatus: subActive ? "active" : (subscriptionStatus ?? "incomplete"),
-          status: subActive ? "paid" : "pending",
+          // trialing = card saved, $0 today, first $15 on payday → "scheduled" so the admin
+          // payday queue and the cron pick it up; invoice.paid flips it to paid/active.
+          status: subActive ? "paid" : subTrialing ? "scheduled" : "pending",
           paidAt: subActive ? new Date() : null,
-          scheduledDate: null,
+          scheduledDate: payday ? new Date(payday + "T14:00:00Z") : null,
           stripePaymentIntentId: null,
           stripePaymentMethodId: null,
         }
@@ -133,7 +140,18 @@ export async function POST(req: NextRequest) {
       create: { customerId: customer.id, ...paymentData },
     });
 
-    await sendConfirmationEmail({ name, email, services, paymentType, scheduledDate });
+    // Lead → converted: cancel the scheduled abandonment + nurture emails.
+    if (isSubscription && (subActive || subTrialing)) {
+      try {
+        const lead = await prisma.lead.findUnique({ where: { email } });
+        if (lead && !lead.convertedAt) {
+          await Promise.all([cancelScheduled(lead.abandonEmailId), cancelScheduled(lead.nurtureEmailId)]);
+          await prisma.lead.update({ where: { id: lead.id }, data: { convertedAt: new Date(), stage: "converted", abandonEmailId: null, nurtureEmailId: null } });
+        }
+      } catch (e) { console.error("lead conversion failed:", e); }
+    }
+
+    await sendConfirmationEmail({ name, email, services, paymentType, scheduledDate, payday: payday ?? undefined });
 
     return NextResponse.json({
       success: true,

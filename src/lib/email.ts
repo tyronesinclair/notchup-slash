@@ -14,6 +14,7 @@ type ConfirmationEmailParams = {
   services: Service[];
   paymentType: "immediate" | "scheduled" | "subscription";
   scheduledDate?: string;
+  payday?: string; // YYYY-MM-DD — subscription: first $15 lands on this date
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -52,6 +53,7 @@ export async function sendConfirmationEmail({
   services,
   paymentType,
   scheduledDate,
+  payday,
 }: ConfirmationEmailParams) {
   const serviceList = services
     .map((s) => `<li>${s.provider} — ${TYPE_LABEL[s.serviceType] ?? s.serviceType}</li>`)
@@ -59,14 +61,19 @@ export async function sendConfirmationEmail({
 
   const isSub = paymentType === "subscription";
 
+  const paydayText = payday ? new Date(payday + "T12:00:00Z").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }) : null;
   const paymentNote = isSub
-    ? `Your Slash subscription is active — <strong>$15/month, cancel anytime</strong>. You keep <strong>100%</strong> of every dollar we save you.`
+    ? (paydayText
+        ? `<strong>$0 charged today.</strong> Your first $15 comes out on <strong>${paydayText}</strong>, then $15/month on the same day. You keep <strong>100%</strong> of every dollar we save you.`
+        : `Your Slash subscription is active — <strong>$15/month, cancel anytime</strong>. You keep <strong>100%</strong> of every dollar we save you.`)
     : paymentType === "scheduled" && scheduledDate
       ? `Your $35 activation fee is scheduled for <strong>${scheduledDate}</strong>.`
       : "Your $35 activation fee has been received.";
 
   const guarantee = isSub
-    ? `<strong>30-day money-back guarantee, no questions asked.</strong> Not for you? Cancel any time from your <a href="${manageUrl(email)}" style="color:#027A48;">billing page</a>.`
+    ? (paydayText
+        ? `<strong>Change your mind before ${paydayText}?</strong> Cancel from your <a href="${manageUrl(email)}" style="color:#027A48;">billing page</a> and you're never charged. After that, 30-day money back, no questions asked.`
+        : `<strong>30-day money-back guarantee, no questions asked.</strong> Not for you? Cancel any time from your <a href="${manageUrl(email)}" style="color:#027A48;">billing page</a>.`)
     : `<strong>Remember:</strong> If we can't save you $100+/year, your $35 is fully refunded. If you reject our savings proposal, you get your $35 back too.`;
 
   const queueNote = isSub

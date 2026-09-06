@@ -25,7 +25,7 @@ export const HERO_VARIANTS: Record<Variant, { lead: string; struck: string; tail
     lead: "Lower your",
     struck: "phone & internet bill",
     tail: "without a single call.",
-    lede: "Slash negotiates with Rogers, Bell or Telus for you — $15/mo, and you keep 100% of the savings. Pass along one sign-in code, approve the win, done. Not for you? Money back in 30 days.",
+    lede: "Slash negotiates with Rogers, Bell or Telus for you — $0 today, $15/mo from your next payday, and you keep 100% of the savings. Pass along one sign-in code, approve the win, done. Not for you? Money back in 30 days.",
   },
   // c = loyalty-tax pain framing (defined for later; preview with ?var=c)
   c: {

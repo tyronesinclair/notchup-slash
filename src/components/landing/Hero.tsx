@@ -42,11 +42,11 @@ export default function Hero({ variant = "a" }: { variant?: Variant }) {
               <span className="hero-promise-amount">100%</span>
               <span>of the savings are <em style={{ ...serif, color: "var(--accent-ink)" }}>yours.</em> We take $0.</span>
             </div>
-            <div className="hero-promise-sub">$15/month · 30-day money-back guarantee · cancel anytime</div>
+            <div className="hero-promise-sub">$0 today · $15/mo from your next payday · cancel anytime</div>
           </div>
 
           <div className="hero-ctas">
-            <Link href="/sign-up" className="btn btn-primary btn-lg">Start for $15/mo <span aria-hidden>→</span></Link>
+            <Link href="/sign-up" className="btn btn-primary btn-lg">Start for $0 today <span aria-hidden>→</span></Link>
             <a href="#how" className="btn btn-ghost btn-lg">See how it works</a>
           </div>
 
@@ -71,7 +71,7 @@ export default function Hero({ variant = "a" }: { variant?: Variant }) {
                 <path id="circ" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
               </defs>
               <text className="stamp-text">
-                <textPath href="#circ" startOffset="0">KEEP 100% · $15/MO · 30-DAY MONEY BACK · </textPath>
+                <textPath href="#circ" startOffset="0">KEEP 100% · $0 TODAY · $15/MO FROM PAYDAY · </textPath>
               </text>
             </svg>
             <div className="hero-stamp-core">

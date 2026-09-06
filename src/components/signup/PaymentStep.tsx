@@ -3,8 +3,9 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe-client";
-import { Loader2, ShieldCheck, RotateCcw } from "lucide-react";
+import { Loader2, ShieldCheck, CalendarCheck } from "lucide-react";
 import { FormData } from "./SignUpForm";
+import { paydayLong } from "@/lib/payday";
 
 type Props = {
   formData: FormData;
@@ -18,6 +19,8 @@ function PaymentForm({ formData }: { formData: FormData }) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const payday = formData.payday ? paydayLong(formData.payday) : "your next payday";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
@@ -25,16 +28,17 @@ function PaymentForm({ formData }: { formData: FormData }) {
     setError(null);
     const base = typeof window !== "undefined" ? window.location.pathname.replace(pathname, "") : "";
     try {
-      const { error } = await stripe.confirmPayment({
+      // Setup mode: saves the card against the trialing subscription. Nothing is charged now.
+      const { error } = await stripe.confirmSetup({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}${base}/confirmation?sub=true`,
+          return_url: `${window.location.origin}${base}/confirmation?sub=true&payday=${encodeURIComponent(formData.payday ?? "")}`,
           payment_method_data: { billing_details: { name: formData.name, email: formData.email } },
         },
       });
-      if (error) setError(error.message ?? "Payment failed. Please try again.");
+      if (error) setError(error.message ?? "We couldn't save that card. Please try another.");
     } catch (err) {
-      console.error("Subscription confirm error:", err);
+      console.error("Subscription setup error:", err);
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
@@ -44,29 +48,24 @@ function PaymentForm({ formData }: { formData: FormData }) {
   return (
     <form onSubmit={handleSubmit}>
       <h2 className="text-lg font-extrabold text-gray-900 mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>
-        Slash — $15/month
+        $0 today. $15 on your payday.
       </h2>
       <p className="text-sm text-gray-500 mb-5">
-        Keep 100% of what we save you. Cancel anytime. 30-day money-back guarantee, no questions asked.
+        Nothing is charged now. Your first $15 comes out on <strong className="text-gray-700">{payday}</strong>, then monthly. Cancel before then and you&apos;re never charged.
       </p>
-
-      {/* One disclaimed estimate — no invented per-provider figures. */}
-      <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-        <span className="text-green-600 text-lg shrink-0">💰</span>
-        <p className="text-xs text-green-800 leading-snug">
-          <strong>Typical Canadian households save an estimated $487/year</strong> on phone, internet and TV — and every dollar is yours. Slash is $15/mo, 0% of your savings.
-        </p>
-      </div>
 
       {/* Plan summary */}
       <div className="mb-5 bg-gray-50 rounded-xl p-4 text-sm">
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-gray-700 font-medium">Slash monthly subscription</span>
+          <span className="text-gray-700 font-medium">Due today</span>
+          <span className="font-extrabold text-green-700">$0.00</span>
+        </div>
+        <div className="flex justify-between items-center mb-1.5">
+          <span className="text-gray-700 font-medium flex items-center gap-1.5"><CalendarCheck size={14} className="text-violet-500" /> First payment · {payday}</span>
           <span className="font-bold text-gray-900">$15.00 CAD</span>
         </div>
         <div className="flex justify-between items-center text-xs text-gray-400">
-          <span>Renews monthly until you cancel</span>
-          <span>Charged today</span>
+          <span>Then $15/mo on the same day · cancel anytime</span>
         </div>
         <div className="flex justify-between items-center text-xs text-green-700 font-semibold mt-2 pt-2 border-t border-gray-200">
           <span>Our share of your savings</span>
@@ -76,20 +75,20 @@ function PaymentForm({ formData }: { formData: FormData }) {
 
       {/* Card */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-700 mb-2">Card details</label>
+        <label className="block text-xs font-semibold text-gray-700 mb-2">Card to use on payday</label>
         <div className="rounded-lg border border-gray-300 p-3">
           <PaymentElement
             options={{
               layout: "tabs",
               fields: { billingDetails: { name: "never", email: "never" } },
-              terms: { card: "never" }, // we render the mandate sentence ourselves, above
+              terms: { card: "never" }, // we render the mandate sentence ourselves, below
             }}
           />
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">Apple Pay &amp; Google Pay supported where available.</p>
+        <p className="text-xs text-gray-400 mt-1.5">Apple Pay &amp; Google Pay supported where available. Debit cards work too.</p>
       </div>
 
-      {/* Card-on-file consent — shown in full, applies to everyone (replaces the old opt-in checkbox). */}
+      {/* Card-on-file consent — shown in full, applies to everyone. */}
       <p className="mb-4 text-xs text-gray-600 leading-snug">
         By providing your card information, you allow NotchUp to charge your card for future payments in accordance with their terms.
       </p>
@@ -100,10 +99,10 @@ function PaymentForm({ formData }: { formData: FormData }) {
 
       {/* Guarantee */}
       <div className="mb-5 rounded-xl border-2 border-green-300 bg-green-50 px-4 py-4 text-center">
-        <div className="flex items-center justify-center gap-2 text-base font-extrabold text-green-800 mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
-          <RotateCcw size={16} /> 30-day money-back guarantee
+        <div className="text-base font-extrabold text-green-800 mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
+          Not charged until {payday}
         </div>
-        <div className="text-xs text-green-700">Not for you? Full refund within 30 days. No questions asked.</div>
+        <div className="text-xs text-green-700">Cancel before then and you pay nothing. After that, 30-day money back, no questions asked.</div>
       </div>
 
       <button
@@ -112,7 +111,7 @@ function PaymentForm({ formData }: { formData: FormData }) {
         className="w-full py-4 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ background: "#4F4EA5", fontFamily: "var(--font-montserrat)" }}
       >
-        {isLoading ? (<><Loader2 size={16} className="animate-spin" /> Processing…</>) : "Start Slash — $15/mo →"}
+        {isLoading ? (<><Loader2 size={16} className="animate-spin" /> Saving your card…</>) : "Start Slash — $0 today →"}
       </button>
 
       {/* Required disclosure: auto-renewal + terms, right where the card is entered. */}
@@ -120,7 +119,7 @@ function PaymentForm({ formData }: { formData: FormData }) {
         By subscribing you agree to NotchUp&apos;s{" "}
         <a href="https://www.notchup.app/terms-of-services" target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and{" "}
         <a href="https://www.notchup.app/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>.
-        $15.00 CAD renews monthly until you cancel. Cancel anytime from your billing page.
+        $0 today. $15.00 CAD on {payday}, then monthly until you cancel. Cancel anytime from your billing page.
       </p>
       <p className="text-[11px] text-gray-400 text-center mt-2 leading-snug">
         <strong className="text-gray-500">Next:</strong> you&apos;ll add your provider login and mobile number. Providers text a one-time sign-in code — we&apos;ll ask you to pass it along.

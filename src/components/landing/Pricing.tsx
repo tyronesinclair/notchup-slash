@@ -21,6 +21,7 @@ export default function Pricing() {
             <div className="price-tag">Everything included</div>
             <div className="price-label" style={{ color: "var(--accent-ink)" }}>Slash</div>
             <div className="price-big">$15<span style={{ fontSize: 18, color: "var(--muted)", fontWeight: 400 }}> / month</span></div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--accent-ink)", marginTop: -6, marginBottom: 10 }}>$0 today — first payment on your next payday</div>
             <ul className="price-list">
               <li>Unlimited bills — internet, mobile, TV, home phone</li>
               <li>Full line-by-line bill audit</li>
@@ -30,16 +31,17 @@ export default function Pricing() {
               <li>Cancel anytime, two clicks, no call</li>
             </ul>
             <Link href="/sign-up" className="btn btn-primary btn-lg" style={{ justifyContent: "center", marginTop: 8 }}>
-              Start for $15/mo <span aria-hidden>→</span>
+              Start for $0 today <span aria-hidden>→</span>
             </Link>
-            <div style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>Charged monthly · cancel anytime</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>First $15 on your payday · then monthly · cancel anytime</div>
           </div>
 
           <div className="price-card price-guarantee">
             <div className="price-label">Guarantee</div>
             <div className="price-big" style={{ ...serif, fontSize: 52 }}>30 days, no questions</div>
             <ul className="price-list">
-              <li>Not for you? Full refund within 30 days.</li>
+              <li>Cancel before your first payday and you're never charged.</li>
+              <li>Not for you after that? Full refund within 30 days.</li>
               <li>No forms, no &ldquo;why are you leaving,&rdquo; no hold music.</li>
               <li>After that, cancel anytime and you won&apos;t be charged again.</li>
             </ul>

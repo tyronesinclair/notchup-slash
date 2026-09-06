@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, SUB_AMOUNT } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
+import { paydayReminder, sendTpl } from "@/lib/slash-emails";
+import { manageUrl } from "@/lib/stripe";
+import { trialEndToPayday } from "@/lib/payday";
 
 export const runtime = "nodejs";
 
@@ -82,6 +85,13 @@ export async function POST(req: NextRequest) {
           where: { stripeSubscriptionId: subId },
           data: { status: "past_due", subscriptionStatus: "past_due" },
         });
+      }
+    } else if (event.type === "customer.subscription.trial_will_end") {
+      // Fires 3 days before the payday charge. Tell them plainly what's coming and how to stop it.
+      const sub = obj as { id: string; trial_end?: number | null; status?: string };
+      if (sub.trial_end && sub.status === "trialing") {
+        const p = await prisma.payment.findFirst({ where: { stripeSubscriptionId: sub.id }, include: { customer: true } });
+        if (p) await sendTpl(p.customer.email, paydayReminder({ name: p.customer.name, payday: trialEndToPayday(sub.trial_end), manageUrl: manageUrl(p.customer.email) }), { tag: "slash-payday-reminder" });
       }
     } else if (event.type === "customer.subscription.deleted") {
       const sub = obj as { id: string };

@@ -28,7 +28,7 @@ export default function Problem() {
           {/* Figures are estimates — see the savings disclaimer in the footer. */}
           <Stat big="$487" label="a year a typical Canadian household can save on phone, internet and TV — an estimate, and every dollar of it stays yours." />
           <Stat big="0" label="calls you make, hold queues you sit in, retention scripts you argue with. Slash does the waiting." />
-          <Stat big="$15" label="a month, flat. No percentage of your savings, ever. 30-day money back if it's not for you." />
+          <Stat big="$0" label="today. Your first $15 comes out on your next payday, then $15 a month, flat. No percentage of your savings, ever." />
         </div>
       </div>
     </section>

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
+import ChargePaydaysButton from "./ChargePaydaysButton";
 import CustomerFilters from "./CustomerFilters";
 import AlertInbox from "./AlertInbox";
 import { browserbaseConfigured } from "@/lib/browserbase";
@@ -50,11 +51,13 @@ async function getStats() {
     missingPhoneCount,
     taggedEvents,
     variantCustomers,
+    paydayQueue,
+    leadStats,
   ] = await Promise.all([
     prisma.customer.count(),
     prisma.payment.count({ where: { status: "paid" } }),
     prisma.payment.findMany({
-      where: { status: { in: ["scheduled", "failed"] } },
+      where: { status: { in: ["scheduled", "failed"] }, paymentType: { not: "subscription" } }, // legacy $35 only
       include: { customer: true },
       orderBy: { scheduledDate: "asc" },
     }),
@@ -79,6 +82,19 @@ async function getStats() {
       where: { variant: { not: null } },
       select: { variant: true, payment: { select: { status: true } } },
     }),
+    // $0-today subscribers waiting for (or past) their payday, plus first-charge failures.
+    prisma.payment.findMany({
+      where: { paymentType: "subscription", subscriptionStatus: { in: ["trialing", "past_due"] } },
+      include: { customer: true },
+      orderBy: { scheduledDate: "asc" },
+    }),
+    Promise.all([
+      prisma.lead.count(),
+      prisma.lead.count({ where: { convertedAt: { not: null } } }),
+      prisma.lead.count({ where: { abandonScheduledAt: { lte: new Date() }, convertedAt: null, unsubscribedAt: null } }),
+      prisma.lead.count({ where: { nurtureScheduledAt: { lte: new Date() }, convertedAt: null, unsubscribedAt: null } }),
+      prisma.lead.count({ where: { unsubscribedAt: { not: null } } }),
+    ]).then(([total, converted, abandonSent, nurtureSent, unsubscribed]) => ({ total, converted, abandonSent, nurtureSent, unsubscribed })),
   ]);
 
   // Per-variant funnel (views → sign-up clicks → contact → paid). Untagged events are pre-experiment.
@@ -115,6 +131,9 @@ async function getStats() {
     activationMap,
     missingPhoneCount,
     experiment,
+    paydayQueue,
+    leadStats,
+    nowMs: Date.now(),
   };
 }
 
@@ -236,7 +255,11 @@ export default async function AdminPage({
     activationMap,
     missingPhoneCount,
     experiment,
+    paydayQueue,
+    leadStats,
+    nowMs,
   } = stats;
+  const paydayDue = paydayQueue.filter((p) => p.scheduledDate && p.scheduledDate.getTime() <= nowMs).length;
   const experimentArms = Object.keys(experiment).sort();
   const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");
 
@@ -428,6 +451,49 @@ export default async function AdminPage({
             </form>
           </div>
         )}
+
+        {/* Payday queue — $0-today subscribers (Stripe trial ends on their payday) */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-sm font-bold text-gray-700" style={{ fontFamily: "var(--font-montserrat)" }}>Payday queue</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Card saved, $0 charged. Stripe bills $15 automatically on each payday (≈7am PT); the button forces anyone whose payday has passed and retries failed first charges.</p>
+            </div>
+            <ChargePaydaysButton dueCount={paydayDue} />
+          </div>
+          {paydayQueue.length === 0 ? (
+            <p className="px-6 py-6 text-xs text-gray-400">No one waiting for a payday charge yet.</p>
+          ) : (
+            <div className="overflow-x-auto"><table className="w-full text-sm">
+              <thead><tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                <th className="text-left px-6 py-3">Customer</th><th className="text-left px-6 py-3">Payday</th><th className="text-left px-6 py-3">Status</th><th className="text-left px-6 py-3">Signed up</th>
+              </tr></thead>
+              <tbody>
+                {paydayQueue.map((p) => {
+                  const d = p.scheduledDate ? new Date(p.scheduledDate) : null;
+                  const overdue = !!d && d.getTime() <= nowMs;
+                  const label = d ? d.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric", timeZone: "America/Vancouver" }) : "—";
+                  const days = d ? Math.ceil((d.getTime() - nowMs) / 86400e3) : null;
+                  return (
+                    <tr key={p.id} className="border-b border-gray-50">
+                      <td className="px-6 py-3"><a href={`/slash/admin/customers/${p.customerId}`} className="block group"><span className="font-medium text-gray-900 group-hover:text-violet-600 block">{p.customer.name}</span><span className="text-xs text-gray-400">{p.customer.email}</span></a></td>
+                      <td className="px-6 py-3"><span className={`font-medium ${overdue ? "text-amber-700" : "text-gray-900"}`}>{label}</span>{days !== null && <div className="text-xs text-gray-400">{overdue ? "due — Stripe should have charged" : `in ${days} day${days === 1 ? "" : "s"}`}</div>}</td>
+                      <td className="px-6 py-3"><Badge label={p.subscriptionStatus === "past_due" ? "First charge failed" : "Card saved · $0 today"} color={p.subscriptionStatus === "past_due" ? "red" : "green"} /></td>
+                      <td className="px-6 py-3 text-xs text-gray-500">{new Date(p.createdAt).toLocaleDateString("en-CA", { month: "short", day: "numeric", timeZone: "America/Vancouver" })}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table></div>
+          )}
+          <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-500 flex flex-wrap gap-x-5 gap-y-1">
+            <span><strong className="text-gray-700">Leads</strong> {leadStats.total}</span>
+            <span>30-min reminder sent {leadStats.abandonSent}</span>
+            <span>day-3 nurture sent {leadStats.nurtureSent}</span>
+            <span>converted {leadStats.converted}</span>
+            <span>unsubscribed {leadStats.unsubscribed}</span>
+          </div>
+        </div>
 
         {/* Scheduled payments — Stripe-verified card status */}
         {scheduledTotal > 0 && (

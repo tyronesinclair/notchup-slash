@@ -17,7 +17,7 @@ export default function CTA() {
 
         <div className="hero-ctas" style={{ justifyContent: "center" }}>
           <Link href="/sign-up" className="btn btn-primary btn-lg">
-            Start for $15/mo <span aria-hidden>→</span>
+            Start for $0 today <span aria-hidden>→</span>
           </Link>
         </div>
 

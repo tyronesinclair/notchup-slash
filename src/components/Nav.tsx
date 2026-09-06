@@ -68,8 +68,8 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
 
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <Link href="/manage" className="nav-sign-in">Manage subscription</Link>
-            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Start for $15/mo <span aria-hidden>→</span></Link>}
-            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$15/mo →</Link>}
+            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-desktop">Start for $0 today <span aria-hidden>→</span></Link>}
+            {!hideSignUpCta && <Link href="/sign-up" className="btn btn-primary btn-sm nav-cta-mobile">$0 today →</Link>}
             <button
               className="nav-hamburger"
               onClick={() => setOpen(o => !o)}
@@ -95,7 +95,7 @@ export default function Nav({ hideSignUpCta }: { hideSignUpCta?: boolean } = {})
               <Link href="/manage" className="nav-drawer-signin" onClick={close}>Manage subscription</Link>
               {!hideSignUpCta && (
                 <Link href="/sign-up" className="btn btn-primary" style={{ justifyContent: "center" }} onClick={close}>
-                  Start for $15/mo →
+                  Start for $0 today →
                 </Link>
               )}
             </div>

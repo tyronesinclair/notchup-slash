@@ -106,3 +106,28 @@ model Payment {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 }
+
+// Sign-up leads: captured at the name+email step, before any payment. Drives the
+// 30-minute abandonment email and the day-3 nurture (both scheduled via Resend at
+// capture time and cancelled on conversion or unsubscribe).
+model Lead {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  variant            String?
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmContent         String?
+  stage              String    @default("contact") // contact | bills | checkout | converted
+  abandonEmailId     String?   // Resend id of the scheduled abandonment email
+  abandonScheduledAt DateTime?
+  nurtureEmailId     String?   // Resend id of the scheduled day-3 nurture
+  nurtureScheduledAt DateTime?
+  convertedAt        DateTime?
+  unsubscribedAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([createdAt])
+}

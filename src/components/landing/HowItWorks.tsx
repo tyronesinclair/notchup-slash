@@ -2,7 +2,7 @@ const steps = [
   {
     n: "01", time: "5 minutes", icon: "📋",
     title: "Add your bills, subscribe",
-    body: "Tell us your providers and add your account login (AES-256 encrypted). $15/mo covers every bill you add — they're queued and worked one at a time.",
+    body: "Tell us your providers and add your account login (AES-256 encrypted). $0 today; $15/mo from your next payday covers every bill you add — they're queued and worked one at a time.",
   },
   {
     n: "02", time: "Days to weeks", icon: "🤖",

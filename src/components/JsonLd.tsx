@@ -30,7 +30,7 @@ const serviceSchema = {
     "@type": "Offer",
     price: "15",
     priceCurrency: "CAD",
-    description: "$15/month subscription. Unlimited bills, 0% of savings kept, cancel anytime. 30-day money-back guarantee.",
+    description: "$0 today, then $15/month from your next payday. Unlimited bills, 0% of savings kept, cancel anytime. 30-day money-back guarantee.",
     priceSpecification: {
       "@type": "UnitPriceSpecification",
       price: "15",
