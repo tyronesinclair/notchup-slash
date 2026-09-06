@@ -43,7 +43,16 @@ async function stalledAudience() {
 export async function POST(req: NextRequest) {
   const token = (await cookies()).get("admin_token")?.value;
   if (!token || token !== process.env.ADMIN_SECRET) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const b = await req.json();
+  try {
+    return await handle(await req.json());
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("campaign error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+async function handle(b: { template?: string; to?: string; email?: string; name?: string; dryRun?: boolean }) {
   const template = String(b.template ?? "");
 
   if (b.to === "test") {
