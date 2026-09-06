@@ -67,6 +67,9 @@ export default function ContactStep({ initial, onNext }: Props) {
       <p className="text-sm text-gray-500 mb-6">
         Slash negotiates, you approve or reject. No calls, no hold music.
       </p>
+      <p className="-mt-4 mb-6 inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-800">
+        <span aria-hidden>✓</span> Nothing to pay today — your first $15 comes out on your next payday
+      </p>
 
       <div className="space-y-4">
         <div>

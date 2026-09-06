@@ -51,7 +51,7 @@ function PaymentForm({ formData, onBack }: { formData: FormData; onBack: () => v
         $0 today. $15 on your payday.
       </h2>
       <p className="text-sm text-gray-500 mb-5">
-        Nothing is charged now. Your first $15 comes out on <strong className="text-gray-700">{payday}</strong>, then monthly. Cancel before then and you&apos;re never charged.
+        You pay nothing today. Your first $15 comes out on <strong className="text-gray-700">{payday}</strong>, then once a month. Cancel before then and you pay nothing at all.
       </p>
 
       {/* Plan summary */}
@@ -65,7 +65,7 @@ function PaymentForm({ formData, onBack }: { formData: FormData; onBack: () => v
           <span className="font-bold text-gray-900">$15.00 CAD</span>
         </div>
         <div className="flex justify-between items-center text-xs text-gray-400">
-          <span>Then $15/mo on the same day · cancel anytime</span>
+          <span>Then $15 once a month on that date · cancel anytime</span>
         </div>
         <div className="flex justify-between items-center text-xs text-green-700 font-semibold mt-2 pt-2 border-t border-gray-200">
           <span>Our share of your savings</span>
@@ -102,7 +102,7 @@ function PaymentForm({ formData, onBack }: { formData: FormData; onBack: () => v
         <div className="text-base font-extrabold text-green-800 mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
           Not charged until {payday}
         </div>
-        <div className="text-xs text-green-700">Cancel before then and you pay nothing. After that, 30-day money back, no questions asked.</div>
+        <div className="text-xs text-green-700">Cancel before then and you pay nothing at all. After that, 30-day money back, no questions asked.</div>
       </div>
 
       <button

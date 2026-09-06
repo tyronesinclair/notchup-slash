@@ -6,6 +6,7 @@ import Link from "next/link";
 import RunChargesButton from "./RunChargesButton";
 import RetryChargeButton from "./RetryChargeButton";
 import ChargePaydaysButton from "./ChargePaydaysButton";
+import ChargeNowButton from "./ChargeNowButton";
 import CustomerFilters from "./CustomerFilters";
 import AlertInbox from "./AlertInbox";
 import { browserbaseConfigured } from "@/lib/browserbase";
@@ -466,7 +467,7 @@ export default async function AdminPage({
           ) : (
             <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead><tr className="border-b border-gray-100 text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                <th className="text-left px-6 py-3">Customer</th><th className="text-left px-6 py-3">Payday</th><th className="text-left px-6 py-3">Status</th><th className="text-left px-6 py-3">Signed up</th>
+                <th className="text-left px-6 py-3">Customer</th><th className="text-left px-6 py-3">Payday</th><th className="text-left px-6 py-3">Status</th><th className="text-left px-6 py-3">Signed up</th><th className="text-left px-6 py-3"></th>
               </tr></thead>
               <tbody>
                 {paydayQueue.map((p) => {
@@ -480,6 +481,7 @@ export default async function AdminPage({
                       <td className="px-6 py-3"><span className={`font-medium ${overdue ? "text-amber-700" : "text-gray-900"}`}>{label}</span>{days !== null && <div className="text-xs text-gray-400">{overdue ? "due — Stripe should have charged" : `in ${days} day${days === 1 ? "" : "s"}`}</div>}</td>
                       <td className="px-6 py-3"><Badge label={p.subscriptionStatus === "past_due" ? "First charge failed" : "Card saved · $0 today"} color={p.subscriptionStatus === "past_due" ? "red" : "green"} /></td>
                       <td className="px-6 py-3 text-xs text-gray-500">{new Date(p.createdAt).toLocaleDateString("en-CA", { month: "short", day: "numeric", timeZone: "America/Vancouver" })}</td>
+                      <td className="px-6 py-3"><ChargeNowButton paymentId={p.id} name={p.customer.name} /></td>
                     </tr>
                   );
                 })}

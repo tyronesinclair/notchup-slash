@@ -10,6 +10,9 @@ const PUBLIC_BASE = process.env.PUBLIC_BASE_URL ?? "https://notchup.app/slash";
 const LOGO = "https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/66427492c358294cac47f56b_NU%201B.png";
 
 export const firstName = (name?: string | null) => (String(name ?? "").trim().split(/\s+/)[0] || "there");
+// "Ty, …" opens better than a bare subject; falls back cleanly when we have no name.
+const realFirst = (name?: string | null) => { const f = String(name ?? "").trim().split(/\s+/)[0]; return f && f.length <= 24 ? f.charAt(0).toUpperCase() + f.slice(1) : null; };
+export const subjectFor = (name: string | null | undefined, subject: string) => { const f = realFirst(name); return f ? `${f}, ${subject.charAt(0).toLowerCase()}${subject.slice(1)}` : subject; };
 
 // Long-form payday label: "Friday, September 12"
 export function paydayLabel(iso: string) {
@@ -50,7 +53,7 @@ export type Tpl = { subject: string; html: string; text: string };
 export function abandoned(p: { name?: string | null; email: string; resumeUrl: string }): Tpl {
   const fn = firstName(p.name);
   return {
-    subject: "You were one step from done — $0 today",
+    subject: subjectFor(p.name, "You were one step from done — $0 today"),
     html: shell(`
       ${H2("You were one step from done.")}
       ${P(`Hi ${fn}, you started setting up Slash a little while ago and didn't finish. No charge was made, and everything you entered is saved.`)}
@@ -81,31 +84,33 @@ Unsubscribe: ${unsubUrl(p.email)}`,
 // ── day-3 nurture (one email, leads who never converted) ──
 export function nurture(p: { name?: string | null; email: string; url: string }): Tpl {
   const fn = firstName(p.name);
+  const row = (bill: string, before: number, after: number) => `<tr><td style="padding:11px 14px;border-bottom:1px solid #E0DFF4;font-size:14.5px;color:#17163A;"><strong>${bill}</strong></td><td style="padding:11px 8px;border-bottom:1px solid #E0DFF4;font-size:14px;color:#8A8A99;text-align:right;white-space:nowrap;"><s>$${before}/mo</s></td><td style="padding:11px 14px;border-bottom:1px solid #E0DFF4;font-size:14.5px;color:#17163A;text-align:right;white-space:nowrap;">≈ <strong>$${after}/mo</strong> <span style="color:#1E8E4A;font-weight:700;">save $${before - after}</span></td></tr>`;
   return {
-    subject: "The three lines on your bill that are negotiable",
+    subject: subjectFor(p.name, "Canadians save an estimated $487/yr on these 3 bills"),
     html: shell(`
-      ${H2("A few days ago you looked at Slash. Here's what it actually goes after.")}
-      ${P(`Hi ${fn}. Most Canadian phone and internet bills have three lines that move when someone pushes on them. Nobody pushes, so they stay.`)}
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E0DFF4;border-radius:10px;margin:0 0 16px;">
-        <tr><td style="padding:12px 14px;border-bottom:1px solid #E0DFF4;font-size:14.5px;line-height:1.55;color:#17163A;"><strong>1. The expired promo.</strong> That "$20 off for 12 months" you signed up under quietly ended. The retention team can re-apply a current one.</td></tr>
-        <tr><td style="padding:12px 14px;border-bottom:1px solid #E0DFF4;font-size:14.5px;line-height:1.55;color:#17163A;"><strong>2. The loyalty price.</strong> New customers pay less than you for the same plan. Retention has a rate for people who ask.</td></tr>
-        <tr><td style="padding:12px 14px;font-size:14.5px;line-height:1.55;color:#17163A;"><strong>3. Equipment and add-on fees.</strong> Modem rental, voicemail, "premium" support. Often waivable, almost never waived unless asked.</td></tr>
+      ${H2("What Canadians actually get back when someone pushes on the bill.")}
+      ${P(`Hi ${fn}. Rogers, Bell and Telus raise your rate a little every year and bet you won't ask about it. When someone does ask, the retention team has a lower rate ready. Here's what that typically looks like on common Canadian plans:`)}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E0DFF4;border-radius:10px;margin:0 0 8px;">
+        ${row("Home internet", 105, 71)}${row("Mobile (all lines)", 85, 58)}${row("TV / cable", 40, 27)}
       </table>
-      ${P("Slash logs into your account, finds which of these apply to you, and negotiates them with the retention team. You get the before-and-after and approve or reject. Every dollar it wins is yours.")}
+      <p style="margin:0 0 16px;font-size:12.5px;line-height:1.5;color:#8A8A99;">Estimates at the ~32% a retention offer typically takes off comparable Canadian plans. For a typical household that's about <strong style="color:#17163A;">$487 a year</strong>. Your result depends on your plan and provider.</p>
+      ${P("The catch is that getting it means calling in, waiting on hold, and arguing with a script. Almost nobody does. <strong>Slash does it for you:</strong> it logs into your account, finds the expired promo, the loyalty pricing and the fees that can be waived, and negotiates with retention. You see the before-and-after and say yes or no. Every dollar it wins is yours.")}
       <div style="background:#F7F6FE;border:1.5px solid #4F4EA5;border-radius:12px;padding:16px 18px;margin:0 0 6px;">
-        <p style="margin:0 0 10px;font-size:14.5px;line-height:1.6;color:#17163A;"><strong>$0 today.</strong> Your first $15 comes out on your next payday, and you can cancel before then and never be charged. Typical households save an estimated $487 a year.</p>
+        <p style="margin:0 0 10px;font-size:14.5px;line-height:1.6;color:#17163A;"><strong>You pay nothing today.</strong> Your first $15 comes out on your next payday, and you can cancel before then and never be charged. Keep 100% of the savings.</p>
         <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#4F4EA5;border-radius:999px;"><a href="${p.url}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#FFFFFF;text-decoration:none;">Start for $0 today</a></td></tr></table>
       </div>`,
-      { reason: "You're receiving this because you started signing up for NotchUp Slash. This is our only follow-up.", unsubscribe: unsubUrl(p.email), preheader: "Expired promos, loyalty pricing, equipment fees. Slash goes after all three." }),
-    text: `Hi ${fn}. A few days ago you looked at Slash. Here's what it actually goes after — the three lines on most Canadian phone and internet bills that move when someone pushes:
+      { reason: "You're receiving this because you started signing up for NotchUp Slash. This is our only follow-up. Savings figures are estimates, not a guarantee.", unsubscribe: unsubUrl(p.email), preheader: "Internet $105 → about $71. Mobile $85 → about $58. That's what asking gets you. Slash asks for you." }),
+    text: `Hi ${fn}. Rogers, Bell and Telus raise your rate a little every year and bet you won't ask. When someone does ask, retention has a lower rate ready. What that typically looks like on common Canadian plans (estimates at ~32% off):
 
-1. The expired promo. That "$20 off for 12 months" quietly ended. Retention can re-apply a current one.
-2. The loyalty price. New customers pay less than you for the same plan. Retention has a rate for people who ask.
-3. Equipment and add-on fees. Modem rental, voicemail, "premium" support. Often waivable, almost never waived unless asked.
+- Home internet: $105/mo → about $71 (save $34)
+- Mobile, all lines: $85/mo → about $58 (save $27)
+- TV / cable: $40/mo → about $27 (save $13)
 
-Slash logs into your account, finds which apply to you, and negotiates them. You approve or reject. Every dollar it wins is yours.
+For a typical household that's about $487 a year. Your result depends on your plan and provider.
 
-$0 today. First $15 on your next payday; cancel before then and you're never charged. Start: ${p.url}
+Getting it means calling in, waiting on hold and arguing with a script — almost nobody does. Slash does it for you: it logs into your account, finds the expired promo, the loyalty pricing and the waivable fees, and negotiates with retention. You approve or reject. Every dollar it wins is yours.
+
+You pay nothing today. First $15 on your next payday; cancel before then and you're never charged. Start: ${p.url}
 
 This is our only follow-up. Unsubscribe: ${unsubUrl(p.email)}`,
   };
@@ -115,7 +120,7 @@ This is our only follow-up. Unsubscribe: ${unsubUrl(p.email)}`,
 export function winback(p: { name?: string | null; email: string; url: string }): Tpl {
   const fn = firstName(p.name);
   return {
-    subject: "We changed how you pay for Slash: $0 today",
+    subject: subjectFor(p.name, "We changed how you pay for Slash: $0 today"),
     html: shell(`
       ${H2("You got as far as the card. We fixed the part that stopped you.")}
       ${P(`Hi ${fn}. You set up Slash this week and stopped at the payment step. A lot of people did, and we think we know why: paying $15 on a random Wednesday isn't how anyone's month works.`)}
@@ -147,7 +152,7 @@ Questions? Reply to this email. Unsubscribe: ${unsubUrl(p.email)}`,
 export function paydayReminder(p: { name?: string | null; payday: string; manageUrl: string }): Tpl {
   const fn = firstName(p.name); const day = paydayLabel(p.payday);
   return {
-    subject: `Heads up: your first $15 comes out ${day}`,
+    subject: subjectFor(p.name, `Your first $15 comes out ${day}`),
     html: shell(`
       ${H2(`Your first Slash payment is ${day}.`)}
       ${P(`Hi ${fn}, a quick heads up so nothing surprises you: on <strong>${day}</strong> we'll charge the card you saved <strong>$15.00 CAD</strong>. That's the payday you picked when you signed up.`)}

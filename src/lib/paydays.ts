@@ -5,14 +5,14 @@ import { stripe } from "./stripe";
 // manual override: for every subscription whose payday has arrived and that is still
 // trialing, end the trial now (Stripe invoices + charges immediately); for past_due ones,
 // retry the open invoice. Never touches legacy $35 rows.
-export async function chargeDuePaydays(opts: { force?: boolean } = {}) {
+export async function chargeDuePaydays(opts: { force?: boolean; paymentId?: string } = {}) {
   const now = new Date();
   const due = await prisma.payment.findMany({
     where: {
       paymentType: "subscription",
       subscriptionStatus: { in: ["trialing", "past_due"] },
       stripeSubscriptionId: { not: null },
-      ...(opts.force ? {} : { scheduledDate: { lte: now } }),
+      ...(opts.paymentId ? { id: opts.paymentId } : opts.force ? {} : { scheduledDate: { lte: now } }),
     },
     include: { customer: true },
     orderBy: { scheduledDate: "asc" },
