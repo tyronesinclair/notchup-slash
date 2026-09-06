@@ -38,22 +38,30 @@ export async function POST(req: NextRequest) {
       create: { email, name, ...attribution },
     });
 
-    // SLASH_LIFECYCLE_EMAILS=on turns the reminder + nurture on; until then leads are only recorded.
-    const enabled = process.env.SLASH_LIFECYCLE_EMAILS === "on";
-    const shouldSchedule = enabled && !paid && !lead.convertedAt && !lead.unsubscribedAt && !lead.abandonEmailId && !lead.nurtureEmailId;
-    if (shouldSchedule) {
+    // Each lifecycle email is gated separately (SLASH_ABANDON_EMAIL=on / SLASH_NURTURE_EMAIL=on;
+    // SLASH_LIFECYCLE_EMAILS=on enables both). Until on, leads are only recorded.
+    const master = process.env.SLASH_LIFECYCLE_EMAILS === "on";
+    const abandonOn = master || process.env.SLASH_ABANDON_EMAIL === "on";
+    const nurtureOn = master || process.env.SLASH_NURTURE_EMAIL === "on";
+    const eligible = !paid && !lead.convertedAt && !lead.unsubscribedAt;
+    const wantAbandon = abandonOn && eligible && !lead.abandonEmailId && !lead.abandonScheduledAt;
+    const wantNurture = nurtureOn && eligible && !lead.nurtureEmailId && !lead.nurtureScheduledAt;
+    if (wantAbandon || wantNurture) {
       const link = (campaign: string) => `${PUBLIC_BASE}/sign-up?lead=${lead.id}&utm_source=email&utm_medium=lifecycle&utm_campaign=${campaign}`;
       const abandonAt = new Date(Date.now() + ABANDON_AFTER_MIN * 60e3);
       const nurtureAt = new Date(Date.now() + NURTURE_AFTER_DAYS * 86400e3);
       const unsub = unsubUrl(email);
       const results = await Promise.allSettled([
-        sendTpl(email, abandoned({ name, email, resumeUrl: link("slash-abandon") }), { scheduledAt: abandonAt, tag: "slash-abandon", listUnsubscribe: unsub }),
-        sendTpl(email, nurture({ name, email, url: link("slash-nurture") }), { scheduledAt: nurtureAt, tag: "slash-nurture", listUnsubscribe: unsub }),
+        wantAbandon ? sendTpl(email, abandoned({ name, email, resumeUrl: link("slash-abandon") }), { scheduledAt: abandonAt, tag: "slash-abandon", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),
+        wantNurture ? sendTpl(email, nurture({ name, email, url: link("slash-nurture") }), { scheduledAt: nurtureAt, tag: "slash-nurture", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),
       ]);
       const a = results[0].status === "fulfilled" ? results[0].value.id : null;
       const n = results[1].status === "fulfilled" ? results[1].value.id : null;
       for (const r of results) if (r.status === "rejected") console.error("lead: schedule failed", r.reason);
-      await prisma.lead.update({ where: { id: lead.id }, data: { abandonEmailId: a, abandonScheduledAt: a ? abandonAt : null, nurtureEmailId: n, nurtureScheduledAt: n ? nurtureAt : null } });
+      await prisma.lead.update({ where: { id: lead.id }, data: {
+        ...(a && { abandonEmailId: a, abandonScheduledAt: abandonAt }),
+        ...(n && { nurtureEmailId: n, nurtureScheduledAt: nurtureAt }),
+      } });
     }
     return NextResponse.json({ id: lead.id });
   } catch (err) {
