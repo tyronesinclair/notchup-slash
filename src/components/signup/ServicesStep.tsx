@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Plus, Trash2, Wifi, Smartphone, Tv, Phone, Loader2, CalendarDays } from "lucide-react";
-import { paydayBounds, paydayChips, paydayShort } from "@/lib/payday";
+import { paydayBounds, paydayChips, paydayShort, isValidPayday } from "@/lib/payday";
 import { ServiceEntry } from "./SignUpForm";
 import { nanoid } from "nanoid";
 
@@ -40,6 +40,7 @@ export default function ServicesStep({ initialServices, initialPayday, onSubmit,
   );
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const paydayMissing = submitAttempted && !payday;
+  const paydayInvalid = !!payday && !isValidPayday(payday);
 
   const addService = () =>
     setServices((prev) => [...prev, { id: nanoid(), serviceType: "cell_phone", provider: "" }]);
@@ -126,7 +127,7 @@ export default function ServicesStep({ initialServices, initialPayday, onSubmit,
 
       {hasIncomplete && <p className="mt-3 text-xs text-amber-600">Please select a provider for each bill to continue.</p>}
       {/* Payday: nothing is charged today; the first $15 lands on this date. */}
-      <div className={`mt-6 rounded-xl border p-5 ${paydayMissing ? "border-red-300 bg-red-50/40" : "border-violet-200 bg-violet-50/40"}`}>
+      <div className={`mt-6 rounded-xl border p-5 ${paydayMissing || paydayInvalid ? "border-red-300 bg-red-50/40" : "border-violet-200 bg-violet-50/40"}`}>
         <div className="flex items-center gap-2 mb-1">
           <CalendarDays size={16} className="text-violet-600" />
           <h3 className="text-sm font-extrabold text-gray-900" style={{ fontFamily: "var(--font-montserrat)" }}>When&apos;s your next payday?</h3>
@@ -144,7 +145,8 @@ export default function ServicesStep({ initialServices, initialPayday, onSubmit,
         <input type="date" value={payday} min={bounds.min} max={bounds.max} onChange={(e) => setPayday(e.target.value)}
           className="w-full sm:w-auto rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400" />
         {paydayMissing && <p className="text-xs text-red-500 mt-2">Pick your next payday so we know when your first $15 comes out.</p>}
-        {payday && <p className="text-xs text-green-700 font-semibold mt-2">✓ First $15 on {paydayShort(payday)}. Nothing today.</p>}
+        {paydayInvalid && <p className="text-xs text-red-500 mt-2">Choose a date between tomorrow and {paydayShort(bounds.max)}.</p>}
+        {payday && !paydayInvalid && <p className="text-xs text-green-700 font-semibold mt-2">✓ First $15 on {paydayShort(payday)}. Nothing today.</p>}
       </div>
 
       {error && <div className="mt-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">{error}</div>}
@@ -155,11 +157,11 @@ export default function ServicesStep({ initialServices, initialPayday, onSubmit,
         </button>
         <button
           type="button"
-          disabled={!canSubmit}
+          disabled={!canSubmit || paydayInvalid}
           onClick={() => {
             setSubmitAttempted(true);
             if (!canSubmit) return;
-            if (!payday) return;
+            if (!payday || !isValidPayday(payday)) return;
             onSubmit(services.map((s) => (s.provider === "Other" && s.providerOther?.trim() ? { ...s, provider: s.providerOther.trim() } : s)), payday);
           }}
           className="flex-[2] py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
