@@ -12,7 +12,9 @@ const LOGO = "https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/664274
 export const firstName = (name?: string | null) => (String(name ?? "").trim().split(/\s+/)[0] || "there");
 // "Ty, …" opens better than a bare subject; falls back cleanly when we have no name.
 const realFirst = (name?: string | null) => { const f = String(name ?? "").trim().split(/\s+/)[0]; return f && f.length <= 24 ? f.charAt(0).toUpperCase() + f.slice(1) : null; };
-export const subjectFor = (name: string | null | undefined, subject: string) => { const f = realFirst(name); return f ? `${f}, ${subject.charAt(0).toLowerCase()}${subject.slice(1)}` : subject; };
+// Pass the subject in its after-the-comma form ("you were…", "Canadians save…"); it is
+// capitalized when we have no name to lead with.
+export const subjectFor = (name: string | null | undefined, subject: string) => { const f = realFirst(name); return f ? `${f}, ${subject}` : subject.charAt(0).toUpperCase() + subject.slice(1); };
 
 // Long-form payday label: "Friday, September 12"
 export function paydayLabel(iso: string) {
@@ -53,7 +55,7 @@ export type Tpl = { subject: string; html: string; text: string };
 export function abandoned(p: { name?: string | null; email: string; resumeUrl: string }): Tpl {
   const fn = firstName(p.name);
   return {
-    subject: subjectFor(p.name, "You were one step from done — $0 today"),
+    subject: subjectFor(p.name, "you were one step from done — $0 today"),
     html: shell(`
       ${H2("You were one step from done.")}
       ${P(`Hi ${fn}, you started setting up Slash a little while ago and didn't finish. No charge was made, and everything you entered is saved.`)}
@@ -120,7 +122,7 @@ This is our only follow-up. Unsubscribe: ${unsubUrl(p.email)}`,
 export function winback(p: { name?: string | null; email: string; url: string }): Tpl {
   const fn = firstName(p.name);
   return {
-    subject: subjectFor(p.name, "We changed how you pay for Slash: $0 today"),
+    subject: subjectFor(p.name, "we changed how you pay for Slash: $0 today"),
     html: shell(`
       ${H2("You got as far as the card. We fixed the part that stopped you.")}
       ${P(`Hi ${fn}. You set up Slash this week and stopped at the payment step. A lot of people did, and we think we know why: paying $15 on a random Wednesday isn't how anyone's month works.`)}
@@ -152,7 +154,7 @@ Questions? Reply to this email. Unsubscribe: ${unsubUrl(p.email)}`,
 export function paydayReminder(p: { name?: string | null; payday: string; manageUrl: string }): Tpl {
   const fn = firstName(p.name); const day = paydayLabel(p.payday);
   return {
-    subject: subjectFor(p.name, `Your first $15 comes out ${day}`),
+    subject: subjectFor(p.name, `your first $15 comes out ${day}`),
     html: shell(`
       ${H2(`Your first Slash payment is ${day}.`)}
       ${P(`Hi ${fn}, a quick heads up so nothing surprises you: on <strong>${day}</strong> we'll charge the card you saved <strong>$15.00 CAD</strong>. That's the payday you picked when you signed up.`)}
