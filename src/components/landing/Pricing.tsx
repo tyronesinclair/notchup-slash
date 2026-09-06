@@ -40,7 +40,7 @@ export default function Pricing() {
             <div className="price-label">Guarantee</div>
             <div className="price-big" style={{ ...serif, fontSize: 52 }}>30 days, no questions</div>
             <ul className="price-list">
-              <li>Cancel before your first payday and you're never charged.</li>
+              <li>Cancel before your first payday and you&apos;re never charged.</li>
               <li>Not for you after that? Full refund within 30 days.</li>
               <li>No forms, no &ldquo;why are you leaving,&rdquo; no hold music.</li>
               <li>After that, cancel anytime and you won&apos;t be charged again.</li>
