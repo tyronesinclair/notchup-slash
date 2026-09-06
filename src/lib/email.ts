@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { manageUrl } from "./stripe";
+import { FROM, REPLY_TO } from "./slash-emails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -39,12 +40,8 @@ export async function sendManageLinkEmail(email: string, url: string) {
       <p style="color: #667085; font-size: 13px;">Want a refund in your first 30 days? Just reply to this email — no questions asked.</p>
       <p style="color: #667085; font-size: 13px;">Didn't request this? You can ignore it. Questions: <a href="mailto:help@notchup.app" style="color:#7F56D9;">help@notchup.app</a></p>
     </body></html>`;
-  await resend.emails.send({
-    from: "NotchUp Slash <slash@notchup.app>",
-    to: email,
-    subject: "Your Slash billing link",
-    html,
-  });
+  const r1 = await resend.emails.send({ from: FROM, replyTo: REPLY_TO, to: email, subject: "Your Slash billing link", html });
+  if (r1.error) console.error("manage-link email failed:", r1.error.message);
 }
 
 export async function sendConfirmationEmail({
@@ -125,10 +122,6 @@ export async function sendConfirmationEmail({
     </html>
   `;
 
-  await resend.emails.send({
-    from: "NotchUp Slash <slash@notchup.app>",
-    to: email,
-    subject: isSub ? `You're in, ${name} — Slash is on your bills` : `You're in the queue, ${name} — NotchUp Slash`,
-    html,
-  });
+  const r2 = await resend.emails.send({ from: FROM, replyTo: REPLY_TO, to: email, subject: isSub ? `You're in, ${name} — Slash is on your bills` : `You're in the queue, ${name} — NotchUp Slash`, html });
+  if (r2.error) console.error("confirmation email failed:", r2.error.message);
 }
