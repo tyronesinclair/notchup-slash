@@ -36,7 +36,7 @@ export type FormData = {
   leadId?: string;            // lead row created at the contact step (lifecycle emails)
 };
 
-const STEPS = ["Your Info", "Your Bills", "Payday"];
+const STEPS = ["Your Info", "Your Bills", "$0 today"];
 const STORAGE_KEY = "notchup_slash_form";
 
 export default function SignUpForm() {

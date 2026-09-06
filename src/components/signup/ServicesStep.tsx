@@ -31,9 +31,10 @@ type Props = {
 };
 
 export default function ServicesStep({ initialServices, initialPayday, onSubmit, onBack, isLoading, error }: Props) {
-  const [payday, setPayday] = useState<string>(initialPayday ?? "");
   const bounds = paydayBounds();
   const chips = paydayChips();
+  // Pre-select the soonest common payday so the button is never blocked; one tap changes it.
+  const [payday, setPayday] = useState<string>(initialPayday ?? chips[0]?.iso ?? "");
   const [services, setServices] = useState<ServiceEntry[]>(
     initialServices.length > 0 ? initialServices : [{ id: nanoid(), serviceType: "internet", provider: "" }]
   );

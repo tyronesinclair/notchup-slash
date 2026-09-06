@@ -13,7 +13,7 @@ type Props = {
   onBack: () => void;
 };
 
-function PaymentForm({ formData }: { formData: FormData }) {
+function PaymentForm({ formData, onBack }: { formData: FormData; onBack: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const pathname = usePathname();
@@ -61,7 +61,7 @@ function PaymentForm({ formData }: { formData: FormData }) {
           <span className="font-extrabold text-green-700">$0.00</span>
         </div>
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-gray-700 font-medium flex items-center gap-1.5"><CalendarCheck size={14} className="text-violet-500" /> First payment · {payday}</span>
+          <span className="text-gray-700 font-medium flex items-center gap-1.5 flex-wrap"><CalendarCheck size={14} className="text-violet-500" /> First payment · {payday} <button type="button" onClick={onBack} className="text-xs text-violet-600 underline font-semibold">change</button></span>
           <span className="font-bold text-gray-900">$15.00 CAD</span>
         </div>
         <div className="flex justify-between items-center text-xs text-gray-400">
@@ -163,7 +163,7 @@ export default function PaymentStep({ formData, clientSecret, onBack }: Props) {
         <div className="mb-4">
           <button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600 underline">← Back</button>
         </div>
-        <PaymentForm formData={formData} />
+        <PaymentForm formData={formData} onBack={onBack} />
       </div>
     </Elements>
   );
