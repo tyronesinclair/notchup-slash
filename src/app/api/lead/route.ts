@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
     const name = String(b.name ?? "").trim().slice(0, 120);
     if (!EMAIL_RE.test(email) || name.length < 2) return NextResponse.json({ error: "Name and a valid email are required" }, { status: 400 });
     const s = (v: unknown, n = 120) => (typeof v === "string" && v ? v.slice(0, n) : null);
-    const fromApply = b.source === "apply_optin";
+    // Opt-ins pushed from the NotchUp loan application ("Show me how" on the post-submit Slash
+    // screen). They never started a sign-up, so they get the dedicated follow-up instead of the
+    // "you didn't finish" abandonment email, and never the nurture.
+    const fromApply = b.source === "apply_optin" || b.source === "apply"
+      || b.utm?.utm_medium === "apply-optin" || String(b.utm?.utm_campaign ?? "").includes("optin");
     const attribution = {
       variant: s(b.variant, 8),
       utmSource: s(b.utm?.utm_source) ?? (fromApply ? "apply" : null),
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
     // Already a paying customer? Don't create a lead or schedule anything.
     const paid = await prisma.customer.findFirst({ where: { email, payment: { status: { in: ["paid", "scheduled"] } } }, select: { id: true } });
 
-    const optinStage = (b.source === "apply" || b.utm?.utm_medium === "apply-optin") ? { stage: "optin" } : {};
+    const optinStage = fromApply ? { stage: "optin" } : {};
     const lead = await prisma.lead.upsert({
       where: { email },
       update: { name, ...(existing?.convertedAt ? {} : attribution) },
@@ -56,13 +60,11 @@ export async function POST(req: NextRequest) {
       ? (master || process.env.SLASH_APPLY_OPTIN_EMAIL === "on")
       : (master || process.env.SLASH_ABANDON_EMAIL === "on");
     const nurtureOn = master || process.env.SLASH_NURTURE_EMAIL === "on";
-    // Opt-ins pushed from the NotchUp loan application (utm_medium=apply-optin / source=apply)
-    // never started a sign-up, so the "you didn't finish" emails don't apply to them. They get
-    // recorded (stage=optin) for a dedicated follow-up instead.
-    const isOptin = b.source === "apply" || b.utm?.utm_medium === "apply-optin" || String(b.utm?.utm_campaign ?? "").includes("optin");
-    const eligible = !isOptin && !paid && !lead.convertedAt && !lead.unsubscribedAt;
+    const eligible = !paid && !lead.convertedAt && !lead.unsubscribedAt;
+    // The abandon slot holds the apply follow-up for opt-ins (see firstTpl below); nurture is sign-up-only.
     const wantAbandon = abandonOn && eligible && !lead.abandonEmailId && !lead.abandonScheduledAt;
-    const wantNurture = nurtureOn && eligible && !lead.nurtureEmailId && !lead.nurtureScheduledAt;
+    const wantNurture = nurtureOn && eligible && !fromApply && !lead.nurtureEmailId && !lead.nurtureScheduledAt;
+    console.log("lead:", { id: lead.id, fromApply, abandonOn, nurtureOn, eligible, wantAbandon, wantNurture });
     if (wantAbandon || wantNurture) {
       const link = (campaign: string) => `${PUBLIC_BASE}/sign-up?lead=${lead.id}&utm_source=email&utm_medium=lifecycle&utm_campaign=${campaign}`;
       // Apply opt-ins: the "show me how" follow-up ~5 min later (stored in the abandon slot so
