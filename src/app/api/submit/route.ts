@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const {
       name,
-      email,
+      email: rawEmail,
       phone = "",
       services,
       paymentType,
@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
       variant,
       utm,
     } = await req.json();
+    // Stripe and /api/lead lowercase emails; the form may not. One canonical form everywhere.
+    const email = String(rawEmail ?? "").trim().toLowerCase();
 
     if (!name || !email || !services?.length) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

@@ -29,6 +29,11 @@ export async function POST(req: NextRequest) {
     const existing = await stripe.customers.list({ email, limit: 1 });
     const customer = existing.data[0] ?? (await stripe.customers.create({ email, name: name || undefined }));
 
+    // Going Back to change the payday creates a fresh subscription; drop earlier trialing ones
+    // that never got a card so nothing lingers (Stripe would cancel them at trial end anyway).
+    const stale = await stripe.subscriptions.list({ customer: customer.id, price: priceId, status: "trialing", limit: 10 });
+    for (const s of stale.data) if (!s.default_payment_method) { try { await stripe.subscriptions.cancel(s.id); } catch (e) { console.warn("could not cancel stale trial", s.id, (e as Error).message); } }
+
     const sub = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
