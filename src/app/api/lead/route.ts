@@ -41,10 +41,11 @@ export async function POST(req: NextRequest) {
     // Already a paying customer? Don't create a lead or schedule anything.
     const paid = await prisma.customer.findFirst({ where: { email, payment: { status: { in: ["paid", "scheduled"] } } }, select: { id: true } });
 
+    const optinStage = (b.source === "apply" || b.utm?.utm_medium === "apply-optin") ? { stage: "optin" } : {};
     const lead = await prisma.lead.upsert({
       where: { email },
       update: { name, ...(existing?.convertedAt ? {} : attribution) },
-      create: { email, name, ...attribution },
+      create: { email, name, ...attribution, ...optinStage },
     });
 
     // Each lifecycle email is gated separately (SLASH_ABANDON_EMAIL=on / SLASH_NURTURE_EMAIL=on;
@@ -55,7 +56,11 @@ export async function POST(req: NextRequest) {
       ? (master || process.env.SLASH_APPLY_OPTIN_EMAIL === "on")
       : (master || process.env.SLASH_ABANDON_EMAIL === "on");
     const nurtureOn = master || process.env.SLASH_NURTURE_EMAIL === "on";
-    const eligible = !paid && !lead.convertedAt && !lead.unsubscribedAt;
+    // Opt-ins pushed from the NotchUp loan application (utm_medium=apply-optin / source=apply)
+    // never started a sign-up, so the "you didn't finish" emails don't apply to them. They get
+    // recorded (stage=optin) for a dedicated follow-up instead.
+    const isOptin = b.source === "apply" || b.utm?.utm_medium === "apply-optin" || String(b.utm?.utm_campaign ?? "").includes("optin");
+    const eligible = !isOptin && !paid && !lead.convertedAt && !lead.unsubscribedAt;
     const wantAbandon = abandonOn && eligible && !lead.abandonEmailId && !lead.abandonScheduledAt;
     const wantNurture = nurtureOn && eligible && !lead.nurtureEmailId && !lead.nurtureScheduledAt;
     if (wantAbandon || wantNurture) {
