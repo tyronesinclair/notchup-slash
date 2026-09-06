@@ -37,7 +37,8 @@ async function stalledAudience() {
     prisma.lead.findMany({ where: { email: { in: emails }, OR: [{ unsubscribedAt: { not: null } }, { convertedAt: { not: null } }] }, select: { email: true } }),
   ]);
   const skip = new Set([...paid, ...optedOut].map((x) => x.email.toLowerCase()));
-  return [...byEmail.values()].filter((r) => !r.statuses.has("active") && !r.statuses.has("trialing") && !r.statuses.has("past_due") && !skip.has(r.email) && !r.email.includes("notchup-slash-test"));
+  const looksDeliverable = (e: string) => /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(e) && !/@(gmil|gmai|gamil|hotmal|outlok)\./.test(e);
+  return [...byEmail.values()].filter((r) => looksDeliverable(r.email) && !r.statuses.has("active") && !r.statuses.has("trialing") && !r.statuses.has("past_due") && !skip.has(r.email) && !r.email.includes("notchup-slash-test"));
 }
 
 export async function POST(req: NextRequest) {
