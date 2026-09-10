@@ -67,7 +67,9 @@ export async function POST(req: NextRequest) {
     // ── Subscription lifecycle ($15/mo) ──
     if (event.type === "invoice.paid") {
       const subId = invoiceSubscriptionId(obj);
-      if (subId) {
+      const inv = obj as { amount_paid?: number; billing_reason?: string };
+      // A trial starts with a $0 invoice that is "paid" instantly. Only a real collection counts.
+      if (subId && (inv.amount_paid ?? 0) > 0) {
         const { count } = await prisma.payment.updateMany({
           where: { stripeSubscriptionId: subId },
           data: { status: "paid", subscriptionStatus: "active", amount: SUB_AMOUNT, paidAt: new Date() },
