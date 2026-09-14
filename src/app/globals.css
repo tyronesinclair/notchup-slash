@@ -635,9 +635,12 @@ img, svg { display: block; }
 
 /* ── Footer ────────────────────────────────────────── */
 .footer { padding: 72px 0 32px; background: var(--bg); border-top: 1px solid var(--line); }
+.footer-brand { margin-bottom: 44px; }
+.footer-logo { display: inline-flex; align-items: center; }
+.footer-email { color: var(--accent-ink); }
 .footer-grid {
-  display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr;
-  gap: 48px; margin-bottom: 48px;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 32px; margin-bottom: 48px;
 }
 .foot-fine {
   margin-top: 16px; padding: 28px 0;
@@ -679,7 +682,11 @@ img, svg { display: block; }
   .t-card { grid-column: span 1; }
   .t-feature { grid-column: span 2; }
   .nav-links { display: none; }
-  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: repeat(3, 1fr); }
+  /* Touch screens: every footer link a 44px tap target. 4px of padding on a
+     14px line looked spaced; the target was 29px. */
+  .footer-grid a { display: flex; align-items: center; min-height: 44px; padding: 0; }
+  .footer-logo, .footer-email { min-height: 44px; display: inline-flex; align-items: center; }
   .ex-arrow { display: none; }
   .ex-step { min-width: 100%; }
 }
@@ -742,14 +749,16 @@ img, svg { display: block; }
   .final-h { font-size: 44px; line-height: 1.02; }
   .final-sub { font-size: 16px; }
   .footer { padding: 40px 0 24px; }
-  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 32px; }
+  .footer-brand { margin-bottom: 32px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px 20px; margin-bottom: 32px; }
   .foot-bottom { flex-direction: column; align-items: flex-start; font-size: 12px; }
 }
 @media (max-width: 420px) {
   .hero-h1 { font-size: 34px; }
   .hero-art { display: none; }
   .calc-big { font-size: 48px; }
-  .footer-grid { grid-template-columns: 1fr; }
+  /* Two columns even on the narrowest phones: Products and Tools share the first row. */
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
 }
 
 /* ── v2: $15/mo subscription overhaul ──────────────── */

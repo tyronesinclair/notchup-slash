@@ -1,9 +1,12 @@
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="container footer-grid">
+      {/* Site-wide footer: same five columns as notchup.app/tools, /learn, Split and
+          Shield. Column order and links: docs/site-footer-spec.md in
+          notchup-tools-and-calculators. */}
+      <div className="container">
         <div className="footer-brand">
-          <a href="https://notchup.app" style={{ display: "inline-block" }}>
+          <a href="https://notchup.app" className="footer-logo" aria-label="NotchUp">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/66427492c358294cac47f56b_NU%201B.png"
@@ -16,38 +19,59 @@ export default function Footer() {
           </p>
           <div style={{ marginTop: 18, fontSize: 13.5, color: "var(--ink-soft)", lineHeight: 1.7 }}>
             <div>(778) 400-5126</div>
-            <a href="mailto:hello@notchup.app" style={{ color: "var(--accent-ink)" }}>hello@NotchUp.app</a>
+            <a href="mailto:hello@notchup.app" className="footer-email">hello@NotchUp.app</a>
             <p style={{ color: "var(--muted)", fontSize: 12, marginTop: 12, lineHeight: 1.5, maxWidth: 320 }}>
               NotchUp only offers online services. We cannot accept customers or conduct any transactions from our office.
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="container footer-grid">
+        <div>
+          <div className="foot-h">Products</div>
+          <a href="https://apply.notchup.app">Wage Advance</a>
+          <a href="https://www.notchup.app/notchup-plus">NotchUp Plus</a>
+          <a href="https://offer.notchup.app/split">Split</a>
+          <a href="https://notchup.app/slash">Slash</a>
+          <a href="https://offer.notchup.app/shield">Shield</a>
+        </div>
+
+        <div>
+          <div className="foot-h">Tools</div>
+          <a href="https://notchup.app/tools/">All Tools</a>
+          <a href="https://notchup.app/tools/statutory-holiday-pay-calculator/">Statutory Holiday Pay</a>
+          <a href="https://notchup.app/tools/hourly-wage-calculator/">Hourly Wage</a>
+          <a href="https://notchup.app/tools/vacation-pay-calculator/">Vacation Pay</a>
+          <a href="https://notchup.app/tools/overtime-calculator/">Overtime Pay</a>
+          <a href="https://notchup.app/tools/take-home-pay-calculator/">Take-Home Pay</a>
+        </div>
+
+        <div>
+          <div className="foot-h">Learn</div>
+          <a href="https://notchup.app/learn/">All Articles</a>
+          <a href="https://notchup.app/learn/100-instant-loan-canada/">$100 Instant Loan Canada</a>
+          <a href="https://notchup.app/learn/everyone-approved-loans-canada-no-credit-check-what-to-know/">No Credit Check Loans</a>
+          <a href="https://notchup.app/learn/best-apps-like-bree-and-nyble-in-canada-2026/">Apps Like Bree &amp; Nyble</a>
+        </div>
+
+        <div>
+          <div className="foot-h">Resources</div>
+          <a href="https://www.notchup.app/terms-of-services">Terms of Service</a>
+          <a href="https://www.notchup.app/privacy-policy">Privacy Policy</a>
+          <a href="https://www.notchup.app/relief-plan-policy">Relief Plan Policy</a>
         </div>
 
         <div>
           <div className="foot-h">Company</div>
           <a href="https://www.notchup.app/about-us">About Us</a>
           <a href="https://www.notchup.app/relief-plan">Relief Plan</a>
-          <a href="https://www.notchup.app/notchup-plus">NotchUp Plus</a>
-          <a href="https://notchup.app/slash">Slash</a>
-        </div>
-
-        <div>
-          <div className="foot-h">Learn</div>
-          <a href="https://www.notchup.app/advantage">No Credit Check</a>
-          <a href="https://www.notchup.app/alternative">Payroll Loan</a>
-          <a href="https://www.notchup.app/what-is-earned-wage-access">What is Earned Wage Access?</a>
-          <a href="https://notchup.app/learn/">View all posts →</a>
-        </div>
-
-        <div>
-          <div className="foot-h">Resources</div>
-          <a href="https://www.notchup.app/terms-of-services">Terms of services</a>
-          <a href="https://www.notchup.app/privacy-policy">Privacy policy</a>
-          <a href="https://www.notchup.app/relief-plan-policy">Relief plan policy</a>
+          <a href="tel:+17784005126">(778) 400-5126</a>
+          <a href="mailto:hello@notchup.app">hello@NotchUp.app</a>
         </div>
       </div>
 
-      <div className="container foot-fine">
+      <div className="container foot-fine" data-nosnippet>
         <p>
           <strong>About NotchUp Slash</strong> — Slash is an AI bill-negotiation agent for Canadians, by NotchUp. It&apos;s a $15/month subscription that covers unlimited internet, mobile, TV and home-phone bills, negotiated one at a time. We keep 0% of your savings. Cancel anytime; a full refund is available within 30 days of signing up, no questions asked. Slash negotiates with your provider&apos;s retention team through your account and never changes your plan without your approval.
         </p>
