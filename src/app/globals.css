@@ -761,6 +761,12 @@ img, svg { display: block; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
 }
 
+/* Touch devices at any width (iPad landscape, touch laptops): keep footer links at 44px. */
+@media (pointer: coarse) {
+  .footer-grid a { display: flex; align-items: center; min-height: 44px; padding: 0; }
+  .footer-logo, .footer-email { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
 /* ── v2: $15/mo subscription overhaul ──────────────── */
 
 /* 3-step how-it-works */

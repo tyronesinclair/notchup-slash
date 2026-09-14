@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="footer">
@@ -6,7 +8,7 @@ export default function Footer() {
           notchup-tools-and-calculators. */}
       <div className="container">
         <div className="footer-brand">
-          <a href="https://notchup.app" className="footer-logo" aria-label="NotchUp">
+          <a href="https://notchup.app" className="footer-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://cdn.prod.website-files.com/663d33e48a497e68ec23fc06/66427492c358294cac47f56b_NU%201B.png"
@@ -27,13 +29,13 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="container footer-grid">
+      <nav className="container footer-grid" aria-label="Footer">
         <div>
           <div className="foot-h">Products</div>
           <a href="https://apply.notchup.app">Wage Advance</a>
           <a href="https://www.notchup.app/notchup-plus">NotchUp Plus</a>
           <a href="https://offer.notchup.app/split">Split</a>
-          <a href="https://notchup.app/slash">Slash</a>
+          <Link href="/">Slash</Link>
           <a href="https://offer.notchup.app/shield">Shield</a>
         </div>
 
@@ -69,17 +71,17 @@ export default function Footer() {
           <a href="tel:+17784005126">(778) 400-5126</a>
           <a href="mailto:hello@notchup.app">hello@NotchUp.app</a>
         </div>
-      </div>
+      </nav>
 
       <div className="container foot-fine" data-nosnippet>
         <p>
-          <strong>About NotchUp Slash</strong> — Slash is an AI bill-negotiation agent for Canadians, by NotchUp. It&apos;s a $15/month subscription that covers unlimited internet, mobile, TV and home-phone bills, negotiated one at a time. We keep 0% of your savings. Cancel anytime; a full refund is available within 30 days of signing up, no questions asked. Slash negotiates with your provider&apos;s retention team through your account and never changes your plan without your approval.
+          <strong>About NotchUp Slash</strong> — Slash is an AI bill-negotiation agent for Canadians, by NotchUp. It&apos;s $0 today, then $15/month (CAD) starting on the payday you choose, covering unlimited internet, mobile, TV and home-phone bills, negotiated one at a time. We keep 0% of your savings. Cancel before your first payday and you&apos;re never charged; after your first payment, a full refund is available within 30 days, no questions asked. Slash negotiates with your provider&apos;s retention team through your account and never changes your plan without your approval.
         </p>
         <p>
           <strong>Not affiliated</strong> — NotchUp Slash is an independent service and is not affiliated with, endorsed by, or sponsored by Rogers Communications, BCE Inc. (Bell), TELUS Corporation, Shaw, Videotron, Freedom Mobile, Fido Solutions, Koodo Mobile, Virgin Plus, Cogeco, Eastlink, or any of their subsidiaries. All carrier names, logos, and trademarks are the property of their respective owners and are used here for identification purposes only.
         </p>
         <p>
-          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr, ~32% reduction, calculator results) are estimates based on typical retention-offer reductions for comparable Canadian plans; they are not results from Slash customers and not a guarantee. The example stories and sample bill on this page are illustrative, not real customer quotes. Actual savings depend on your plan, provider, and account history. Competitor fee ranges cited are typical industry success-fee percentages, not claims about any specific company.
+          <strong>Savings disclaimer</strong> — Savings figures shown ($487/yr, ~32% reduction, calculator results) are estimates based on typical retention-offer reductions for comparable Canadian plans; they are not results from Slash customers and not a guarantee. The example stories and sample bill on our site are illustrative, not real customer quotes. Actual savings depend on your plan, provider, and account history. Competitor fee ranges cited are typical industry success-fee percentages, not claims about any specific company.
         </p>
         <p>
           <strong>License Disclosure</strong> — British Columbia, January 11, 2024 License #86443
@@ -87,7 +89,7 @@ export default function Footer() {
       </div>
 
       <div className="container foot-bottom">
-        <span>© 2026 NotchUp. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} NotchUp. All rights reserved.</span>
         <span style={{ color: "var(--muted)" }}>Made in Canada 🇨🇦</span>
       </div>
     </footer>
