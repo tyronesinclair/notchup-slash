@@ -32,12 +32,15 @@ export async function POST(req: NextRequest) {
     // Opt-ins pushed from the NotchUp loan application ("Show me how" on the post-submit Slash
     // screen). They never started a sign-up, so they get the dedicated follow-up instead of the
     // "you didn't finish" abandonment email, and never the nurture.
-    const fromApply = b.source === "apply_optin" || b.source === "apply"
+    // The member portal's offer card ("Show me how" on hey.notchup.app, sent server-side by
+    // notchup-api) is the same kind of opt-in: no sign-up started, so the same follow-up applies.
+    const fromPortal = b.source === "portal";
+    const fromApply = fromPortal || b.source === "apply_optin" || b.source === "apply"
       || b.utm?.utm_medium === "apply-optin" || String(b.utm?.utm_campaign ?? "").includes("optin");
     const attribution = {
       variant: s(b.variant, 8),
-      utmSource: s(b.utm?.utm_source) ?? (fromApply ? "apply" : null),
-      utmMedium: s(b.utm?.utm_medium) ?? (fromApply ? "apply-optin" : null),
+      utmSource: s(b.utm?.utm_source) ?? (fromPortal ? "portal" : fromApply ? "apply" : null),
+      utmMedium: s(b.utm?.utm_medium) ?? (fromPortal ? "offer-card" : fromApply ? "apply-optin" : null),
       utmCampaign: s(b.utm?.utm_campaign), utmContent: s(b.utm?.utm_content),
     };
 
@@ -73,7 +76,7 @@ export async function POST(req: NextRequest) {
       const nurtureAt = new Date(Date.now() + NURTURE_AFTER_DAYS * 86400e3);
       const unsub = unsubUrl(email);
       const firstTpl = fromApply
-        ? applyOptin({ name, email, url: link("slash-apply-optin") })
+        ? applyOptin({ name, email, url: link(fromPortal ? "slash-portal-optin" : "slash-apply-optin"), from: fromPortal ? "portal" : "apply" })
         : abandoned({ name, email, resumeUrl: link("slash-abandon") });
       const results = await Promise.allSettled([
         wantAbandon ? sendTpl(email, firstTpl, { scheduledAt: abandonAt, tag: fromApply ? "slash-apply-optin" : "slash-abandon", listUnsubscribe: unsub }) : Promise.resolve({ id: null as string | null }),

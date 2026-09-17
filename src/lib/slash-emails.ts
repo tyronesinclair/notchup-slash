@@ -151,13 +151,16 @@ Questions? Reply to this email. Unsubscribe: ${unsubUrl(p.email)}`,
 }
 
 // ── apply-funnel opt-in follow-up (scheduled ~5 min after they tap "Show me how" on apply.notchup.app) ──
-export function applyOptin(p: { name?: string | null; email: string; url: string }): Tpl {
+export function applyOptin(p: { name?: string | null; email: string; url: string; from?: "apply" | "portal" }): Tpl {
   const fn = firstName(p.name);
+  // Where they tapped "Show me how": the loan application (default) or the member portal's offer card.
+  const portal = p.from === "portal";
+  const where = portal ? "in your NotchUp dashboard" : "while applying with NotchUp";
   return {
     subject: `${fn === "there" ? "Here’s" : `${fn}, here’s`} how Slash lowers your bills`,
     html: shell(`
       ${H2("You asked us to show you how Slash works. Here it is.")}
-      ${P(`Hi ${fn}. A few minutes ago, while applying with NotchUp, you tapped <strong>“Show me how”</strong> on Slash. Here’s the whole thing in one email.`)}
+      ${P(`Hi ${fn}. A few minutes ago, ${where}, you tapped <strong>“Show me how”</strong> on Slash. Here’s the whole thing in one email.`)}
       ${P("Slash is an AI agent that logs into your Rogers, Bell or Telus account, finds the overcharges — expired promos, loyalty pricing you were never offered, equipment fees — and negotiates them down with the retention team. You pass along one sign-in code and approve the win. No hold music. No awkward calls.")}
       ${dealBox([
         "<strong>$0 today.</strong> Your first $15 comes out on your next payday — you pick the date.",
@@ -168,8 +171,8 @@ export function applyOptin(p: { name?: string | null; email: string; url: string
       ${btn(p.url, "Start for $0 today")}
       ${priceLine}
       <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#54539B;">Questions? Reply to this email. A real person answers.</p>`,
-      { reason: "You're receiving this because you asked to learn about NotchUp Slash while applying with NotchUp.", unsubscribe: unsubUrl(p.email), preheader: "$0 today. Keep 100% of the savings. Cancel anytime." }),
-    text: `Hi ${fn}. A few minutes ago, while applying with NotchUp, you tapped "Show me how" on Slash. Here's the whole thing in one email.
+      { reason: `You're receiving this because you asked to learn about NotchUp Slash ${where}.`, unsubscribe: unsubUrl(p.email), preheader: "$0 today. Keep 100% of the savings. Cancel anytime." }),
+    text: `Hi ${fn}. A few minutes ago, ${where}, you tapped "Show me how" on Slash. Here's the whole thing in one email.
 
 Slash is an AI agent that logs into your Rogers, Bell or Telus account, finds the overcharges — expired promos, loyalty pricing you were never offered, equipment fees — and negotiates them down with the retention team. You pass along one sign-in code and approve the win. No hold music. No awkward calls.
 
