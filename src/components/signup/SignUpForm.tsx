@@ -43,13 +43,15 @@ export default function SignUpForm() {
   const pathname = usePathname();
   const params = useSearchParams();
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
+  // Warm hand-off (the member portal's offer card, CRM links): ?e=&n= prefill the contact step
+  // so someone who is already a NotchUp member never retypes what we know.
+  const [formData, setFormData] = useState<FormData>(() => ({
     services: [],
-    name: "",
-    email: "",
+    name: (params.get("n") ?? "").trim().slice(0, 120),
+    email: (params.get("e") ?? "").trim().toLowerCase().slice(0, 254),
     paymentType: "subscription",
     chargeConsent: true,
-  });
+  }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
